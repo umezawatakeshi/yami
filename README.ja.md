@@ -11,3 +11,8 @@
 ### やらないこと
 
 - ユーザー管理
+
+## ライセンス
+
+YAMI は GNU Affero General Public License version 3 (GNU AGPL3) の下でライセンスされます。
+詳しくは [LICENSE](./LICENSE) ファイルを参照してください。
