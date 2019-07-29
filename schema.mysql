@@ -1,0 +1,36 @@
+CREATE TABLE t_schemaver (
+    version         INT                          NOT NULL
+)   ENGINE InnoDB;
+INSERT INTO t_schemaver VALUES (1);
+
+CREATE TABLE t_auction (
+    auction_id      INT                          NOT NULL AUTO_INCREMENT,
+    type            INT                          NOT NULL,
+    itemname        CHAR(64)                     NOT NULL,
+    username        CHAR(64)                     NOT NULL,
+    quantity        INT                          NOT NULL,
+    price_start     INT                          NOT NULL,
+    price_prompt    INT,
+    price_min_step  INT                          NOT NULL,
+    datetime_start  DATETIME                     NOT NULL,
+    datetime_end    DATETIME                     NOT NULL,
+    datetime_update DATETIME                     NOT NULL,
+    location        CHAR(16)                     NOT NULL,
+    ended           TINYINT                      NOT NULL DEFAULT 0,
+    description     TEXT                         NOT NULL,
+    p_slack_userid  CHAR(32),
+    p_slack_thread  CHAR(32) CHARACTER SET ascii,
+    PRIMARY KEY (auction_id)
+)   ENGINE InnoDB;
+
+CREATE TABLE t_bid (
+    bid_id          INT                          NOT NULL AUTO_INCREMENT,
+    auction_id      INT                          NOT NULL,
+    price           INT                          NOT NULL,
+    datetime_bid    DATETIME                     NOT NULL,
+    username        CHAR(64)                     NOT NULL,
+    p_slack_userid  CHAR(64),
+    PRIMARY KEY (bid_id),
+    FOREIGN KEY (auction_id) REFERENCES t_auction (auction_id),
+    INDEX (auction_id)
+)   ENGINE InnoDB;

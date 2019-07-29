@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block h1 %}
+<h1>{% block title %}オークション一覧{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% if auctions %}
+<table border="border">
+<tr>
+<th>出品ID</th>
+<th>品名</th>
+<th>数量</th>
+<th>出品者</th>
+<th>出品時刻</th>
+<th>終了時刻</th>
+<th>現在価格</th>
+<th>即決価格</th>
+<th>開始価格</th>
+<th>入札数</th>
+</th>
+{% for auction in auctions %}
+<tr>
+<td>{{ auction.auction_id }}</td>
+<td><a href="{{ url_for('yami.info', auction_id=auction.auction_id) }}">{{ auction.itemname }}</a></td>
+<td>{{ auction.quantity }}</td>
+<td>{{ auction.username }}</td>
+<td>{{ auction.datetime_start_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+<td>{{ auction.datetime_end_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+<td>{{ "{:,d}".format(auction.price_current_high) + "円" if auction.price_current_high != None }}</td>
+<td>{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td>
+<td>{{ "{:,d}".format(auction.price_start) + "円" }}</td>
+<td>{{ auction.num_bid }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+<p>開催中のオークションはありません。</p>
+{% endif %}
+<p><a href="{{ url_for('yami.newform') }}">出品する</a></p>
+{% endblock %}

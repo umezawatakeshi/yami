@@ -1,0 +1,11 @@
+<html>
+<head>
+<title>{% block title %}{% endblock %} - {{ current_app.config["YAMI_NAME"] }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+{% block head %}{% endblock %}
+</head>
+<body>
+{% block h1 %}{% endblock %}
+{% block content %}{% endblock %}
+</body>
+</html>

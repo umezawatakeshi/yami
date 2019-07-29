@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block h1 %}
+<h1>{% block title %}出品{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% if succeeded %}
+<p>出品ID {{ auction_id }} で出品しました。</p>
+{% else %}
+<p>出品に失敗しました。</p>
+<p>{{ reason }}</p>
+{% endif %}
+{% endblock %}

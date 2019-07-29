@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block h1 %}
+<h1>{% block title %}出品{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('yami.new') }}" method="post">
+<table border="border">
+<tr>
+<th>品名 <small>必須<small></th>
+<td><input type="text" name="itemname" min="1"/></td>
+</tr>
+<tr>
+<th>数量 <small>必須<small></th>
+<td><input type="number" name="quantity" value="1"/></td>
+</tr>
+<tr>
+<th>出品者 <small>必須<small></th>
+<td><input type="text" name="username"/></td>
+</tr>
+<tr>
+<th>出品期間 <small>必須<small></th>
+<td>
+<input type="radio" id="datetime_end_type_duration" name="datetime_end_type" value="duration" checked="checked"/><label for="datetime_end_type_duration">日数で指定</label> <input type="number" name="datetime_end_days" value="7" min="1"/>日後まで<br/>
+<input type="radio" id="datetime_end_type_datetime" name="datetime_end_type" value="datetime"/><label for="datetime_end_type_datetime">終了時刻で指定</label> <input type="date" name="datetime_end_date"/> <input type="time" name="datetime_end_time"/> まで<br/>
+※終了時刻は自動延長機能により変化することがあります。
+</td>
+</tr>
+<tr>
+<th>開始価格 <small>必須<small></th>
+<td><input type="number" name="price_start" min="0"/>{{ "円" }}</td>
+</tr>
+<tr>
+<th>即決価格</th>
+<td><input type="number" name="price_prompt" min="0"/>{{ "円" }}<br/>即決を希望しない場合は空欄</td>
+</tr>
+<tr>
+<th>最低価格ステップ</th>
+<td><input type="number" name="price_min_step" min="1"/>{{ "円" }}<br/>自動計算に任せる場合は空欄</td>
+</tr>
+<tr>
+<th>受け渡し場所 <small>必須<small></th>
+<td><input type="text" name="location"/></td>
+</tr>
+<tr>
+<th>説明 <small>必須<small></th>
+<td><textarea name="description"></textarea></td>
+</tr>
+<tr>
+<td colspan="2"><button type="submit">出品</button></td>
+</tr>
+</table>
+</form>
+{% endblock %}

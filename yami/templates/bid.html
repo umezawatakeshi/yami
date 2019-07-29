@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block head %}
+<meta http-equiv="Refresh" content="30; url={{ url_for('yami.info', auction_id=auction_id) }}">
+{% endblock %}
+
+{% block h1 %}
+<h1>{% block title %}入札{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% if succeeded %}
+<p>{{ "{:,d}".format(price) + "円" }} で入札しました。</p>
+{% else %}
+<p>入札に失敗しました。</p>
+<p>{{ reason }}</p>
+{% endif %}
+<p>30秒後に自動的にオークション情報ページに遷移します。</p>
+{% endblock %}
