@@ -111,7 +111,6 @@ def bid(auction_id):
 
 	cur = db.get_db().cursor()
 	cur.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC LIMIT %s", (auction_id, auction["quantity"],))
-	append_localtime(auction)
 	bids = [dict((cur.description[i][0], value) for i, value in enumerate(row)) for row in cur.fetchall()]
 	cur.close()
 
