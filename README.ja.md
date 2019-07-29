@@ -12,7 +12,9 @@
 
 - ユーザー管理
 
-## ライセンス
+## 著作権表示とライセンス
+
+Copyright &copy; 2019 UMEZAWA Takeshi
 
 YAMI は GNU Affero General Public License version 3 (GNU AGPL3) の下でライセンスされます。
 詳しくは [LICENSE](./LICENSE) ファイルを参照してください。
