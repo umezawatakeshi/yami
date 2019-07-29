@@ -150,7 +150,7 @@ def bid(auction_id):
 		for bid in bids:
 			if bid["price"] >= auction["price_prompt"]:
 				rest -= 1
-		hammer(auction, (newbid,), rest <= 1)
+		hammer(auction, (newbid,), rest <= 1, False)
 
 	db.get_db().commit()
 
@@ -238,7 +238,7 @@ def append_localtime(dic):
 	dic.update(appended)
 	return dic
 
-def hammer(auction, bids, ended):
+def hammer(auction, bids, ended, expired):
 	for bid in bids:
 		pass
 
