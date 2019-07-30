@@ -6,5 +6,5 @@ MYSQL_PYMYSQL_KWARGS = {
 	"port":     3306,
 	"user":     "yami",
 	"password": "password",
-	"db":       "db_yami",
+	"database": "db_yami",
 }
