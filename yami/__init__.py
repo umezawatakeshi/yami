@@ -17,7 +17,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-from flask import Flask
+from flask import Flask, g
+from datetime import datetime, timezone
 
 def create_app(test_config=None):
 	app = Flask(__name__, instance_relative_config = True)
@@ -29,4 +30,9 @@ def create_app(test_config=None):
 	from . import yami
 	app.register_blueprint(yami.bp)
 
+	@app.before_request
+	def before_request():
+		g.datetime_now = datetime.now(timezone.utc)
+
 	return app
+

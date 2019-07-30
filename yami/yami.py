@@ -12,11 +12,9 @@ def list(page):
 	if (page <= 0):
 		abort(404)
 
-	datetime_now = datetime.now(timezone.utc)
-
 	cur = db.get_db().cursor()
 	napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
-	cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id as auction_id_bid, MAX(price) as price_current_high, COUNT(price) as num_bid FROM t_bid GROUP BY auction_id) AS maxbid ON t_auction.auction_id = maxbid.auction_id_bid WHERE NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (datetime_now, napp, napp * (page - 1)))
+	cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id as auction_id_bid, MAX(price) as price_current_high, COUNT(price) as num_bid FROM t_bid GROUP BY auction_id) AS maxbid ON t_auction.auction_id = maxbid.auction_id_bid WHERE NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (g.datetime_now, napp, napp * (page - 1)))
 	auctions = [dict((cur.description[i][0], value) for i, value in enumerate(row)) for row in cur.fetchall()]
 	cur.close()
 
@@ -63,9 +61,7 @@ def info(auction_id):
 		if auction["price_prompt"] is not None and price_bid_min > auction["price_prompt"]:
 			price_bid_min = auction["price_prompt"]
 
-	datetime_now = datetime.now(timezone.utc)
-
-	ended = auction["ended"] or auction["datetime_end"] <= datetime_now
+	ended = auction["ended"] or auction["datetime_end"] <= g.datetime_now
 
 	return render_template("info.html", current_app=current_app, auction=auction, bids=bids, price_bid_min=price_bid_min, ended=ended)
 
@@ -105,8 +101,7 @@ def bid(auction_id):
 	auction["ended"] = (auction["ended"] != 0)
 	cur.close()
 
-	datetime_now = datetime.now(timezone.utc)
-	if datetime_now >= auction["datetime_end"] or auction["ended"]:
+	if g.datetime_now >= auction["datetime_end"] or auction["ended"]:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="オークションはすでに終了しています。") # TODO i18n
 
 	cur = db.get_db().cursor()
@@ -141,11 +136,11 @@ def bid(auction_id):
 		price = auction["price_prompt"]
 
 	cur = db.get_db().cursor()
-	cur.execute("INSERT INTO t_bid (auction_id, username, price, datetime_bid) VALUES (%s, %s, %s, %s)", (auction_id, username, price, datetime_now,))
+	cur.execute("INSERT INTO t_bid (auction_id, username, price, datetime_bid) VALUES (%s, %s, %s, %s)", (auction_id, username, price, g.datetime_now,))
 	cur.close()
 
 	if auction["price_prompt"] is not None and price >= auction["price_prompt"]:
-		newbid = { "auction_id": auction_id, "username": username, "price": price, "datetime_bid": datetime_now }
+		newbid = { "auction_id": auction_id, "username": username, "price": price, "datetime_bid": g.datetime_now }
 		rest = auction["quantity"]
 		for bid in bids:
 			if bid["price"] >= auction["price_prompt"]:
@@ -179,8 +174,6 @@ def new():
 	location = request.form.get("location")
 	description = request.form.get("description")
 
-	datetime_now = datetime.now(timezone.utc)
-
 	if itemname is None or itemname == "":
 		abort(400)
 	if quantity is None or quantity <= 0:
@@ -192,13 +185,13 @@ def new():
 	elif datetime_end_type == "duration":
 		if datetime_end_days is None or datetime_end_days <= 0:
 			abort(400)
-		datetime_end = datetime.fromtimestamp(datetime_now.timestamp() + 86400 * datetime_end_days, timezone.utc)
+		datetime_end = datetime.fromtimestamp(g.datetime_now.timestamp() + 86400 * datetime_end_days, timezone.utc)
 	elif datetime_end_type == "datetime":
 		datetime_end_date = datetime.strptime(datetime_end_date, "%Y-%m-%d")
 		datetime_end_time = datetime.strptime(datetime_end_time, "%H:%M")
 		datetime_end_local = get_localzone().localize(datetime_end_date.replace(hour=datetime_end_time.time().hour, minute=datetime_end_time.time().minute))
 		datetime_end = datetime.fromtimestamp(datetime_end_local.timestamp(), tz=timezone.utc)
-		if datetime_end <= datetime_now:
+		if datetime_end <= g.datetime_now:
 			abort(400)
 	else:
 		abort(400)
@@ -219,7 +212,7 @@ def new():
 
 	cur = db.get_db().cursor()
 	cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_min_step, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-		(itemname, quantity, username, datetime_now, datetime_end, datetime_now, price_start, price_prompt, price_min_step, location, description,))
+		(itemname, quantity, username, g.datetime_now, datetime_end, g.datetime_now, price_start, price_prompt, price_min_step, location, description,))
 	cur.execute("SELECT LAST_INSERT_ID() FROM t_auction")
 	auction_id = cur.fetchone()[0]
 	cur.close()
