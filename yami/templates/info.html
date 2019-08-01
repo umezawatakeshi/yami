@@ -8,7 +8,7 @@
 {% if ended %}
 <p>このオークションは終了しています。</p>
 {% endif %}
-<table border="border">
+<table border="1">
 <tr><th>出品ID</th><td>{{ auction.auction_id }}</td></tr>
 <tr><th>品名</th><td>{{ auction.itemname }}</td></tr>
 <tr><th>数量</th><td>{{ auction.quantity }}</td></tr>
@@ -23,7 +23,7 @@
 <tr><td colspan="2">{{ auction.description }}</td></tr>
 </table>
 {% if bids %}
-<table border="border">
+<table border="1">
 <tr>
 <th></th>
 <th>価格</th>
@@ -44,13 +44,13 @@
 {% endif %}
 {% if not ended %}
 <form action="{{ url_for('yami.bid', auction_id=auction.auction_id) }}" method="post">
-<table border="border">
+<table border="1">
 <tr>
-<th>入札者名 <small>必須<small></th>
+<th>入札者名 <small>必須</small></th>
 <td><input type="text" id="username" name="username"/></td>
 </tr>
 <tr>
-<th>入札価格 <small>必須<small></th>
+<th>入札価格 <small>必須</small></th>
 <td>
 <input type="hidden" name="price_bid_min" value="{{ price_bid_min }}"/>
 <input type="radio" id="bidtype_min" name="bidtype" value="min" checked="checked"/><label for="bidtype_min">最低入札価格（{{ "{:,d}".format(price_bid_min) + "円" }}）で入札</label><br/>

@@ -6,7 +6,7 @@
 
 {% block content %}
 {% if auctions %}
-<table border="border">
+<table border="1">
 <tr>
 <th>出品ID</th>
 <th>品名</th>
@@ -18,7 +18,7 @@
 <th>即決価格</th>
 <th>開始価格</th>
 <th>入札数</th>
-</th>
+</tr>
 {% for auction in auctions %}
 <tr>
 <td>{{ auction.auction_id }}</td>
