@@ -30,7 +30,7 @@
 <td>{{ "{:,d}".format(auction.price_current_high) + "円" if auction.price_current_high != None }}</td>
 <td>{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td>
 <td>{{ "{:,d}".format(auction.price_start) + "円" }}</td>
-<td>{{ auction.num_bid }}</td>
+<td>{{ auction.num_bids }}</td>
 </tr>
 {% endfor %}
 </table>
