@@ -14,7 +14,7 @@ def list(page):
 
 	cur = db.get_dict_cursor()
 	napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
-	cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id as auction_id_bid, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid ON t_auction.auction_id = maxbid.auction_id_bid WHERE NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (g.datetime_now, napp, napp * (page - 1)))
+	cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid USING(auction_id) WHERE NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (g.datetime_now, napp, napp * (page - 1)))
 	auctions = cur.fetchall()
 	cur.close()
 
@@ -24,7 +24,6 @@ def list(page):
 		append_localtime(auction)
 		if (auction["num_bids"] is None):
 			auction["num_bids"] = 0
-		auction.pop("auction_id_bid", None)
 		auction["ended"] = (auction["ended"] != 0)
 
 	return render_template("list.html", current_app=current_app, auctions=auctions, page=page)
