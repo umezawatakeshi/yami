@@ -10,23 +10,23 @@ app = create_app()
 with app.app_context():
 	datetime_now = datetime.now(timezone.utc)
 
-	cur = db.get_db().cursor()
+	cur = db.get_dict_cursor()
 	cur.execute("SELECT * FROM t_auction WHERE NOT ended AND datetime_end <= %s FOR UPDATE", (datetime_now,))
+	auctions = cur.fetchall()
+	cur.close()
 
-	for row in cur.fetchall():
-		auction = dict((cur.description[i][0], value) for i, value in enumerate(row))
+	for auction in auctions:
 		yami.append_localtime(auction)
 		auction["ended"] = (auction["ended"] != 0)
 
-		curbid = db.get_db().cursor()
-		curbid.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC LIMIT %s", (auction["auction_id"], auction["quantity"],))
-		bids = [dict((cur.description[i][0], value) for i, value in enumerate(row)) for row in curbid.fetchall()]
-		curbid.close()
+		cur = db.get_dict_cursor()
+		cur.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC LIMIT %s", (auction["auction_id"], auction["quantity"],))
+		bids = cur.fetchall()
+		cur.close()
 
 		if auction["price_prompt"] is not None:
 			bids = filter(lambda bid: bid["price"] < auction["price_prompt"], bids)
 
 		yami.hammer(auction, bids, True, True)
 
-	cur.close()
-	db.get_db().commit()
+	db.commit()
