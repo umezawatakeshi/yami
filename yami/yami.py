@@ -12,11 +12,10 @@ def list(page):
 	if (page <= 0):
 		abort(404)
 
-	cur = db.get_dict_cursor()
-	napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
-	cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid USING(auction_id) WHERE NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (g.datetime_now, napp, napp * (page - 1)))
-	auctions = cur.fetchall()
-	cur.close()
+	with db.get_dict_cursor() as cur:
+		napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
+		cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid USING(auction_id) WHERE NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (g.datetime_now, napp, napp * (page - 1)))
+		auctions = cur.fetchall()
 
 	db.commit()
 
@@ -31,21 +30,17 @@ def list(page):
 
 @bp.route("/auction/<int:auction_id>")
 def info(auction_id):
-	cur = db.get_dict_cursor()
-	cur.execute("SELECT * FROM t_auction WHERE auction_id = %s", (auction_id,))
-	auction = cur.fetchone()
-	if (auction is None):
-		cur.close()
-		db.commit()
-		abort(404)
-	append_localtime(auction)
-	auction["ended"] = (auction["ended"] != 0)
-	cur.close()
+	with db.get_dict_cursor() as cur:
+		cur.execute("SELECT * FROM t_auction WHERE auction_id = %s", (auction_id,))
+		auction = cur.fetchone()
+		if (auction is None):
+			abort(404)
+		append_localtime(auction)
+		auction["ended"] = (auction["ended"] != 0)
 
-	cur = db.get_dict_cursor()
-	cur.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC", (auction_id,))
-	bids = cur.fetchall()
-	cur.close()
+	with db.get_dict_cursor() as cur:
+		cur.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC", (auction_id,))
+		bids = cur.fetchall()
 
 	db.commit()
 
@@ -87,24 +82,20 @@ def bid(auction_id):
 	if username is None:
 		abort(400)
 
-	cur = db.get_dict_cursor()
-	cur.execute("SELECT * FROM t_auction WHERE auction_id = %s FOR UPDATE", (auction_id,))
-	auction = cur.fetchone()
-	if (auction is None):
-		cur.close()
-		db.commit()
-		abort(404)
-	append_localtime(auction)
-	auction["ended"] = (auction["ended"] != 0)
-	cur.close()
+	with db.get_dict_cursor() as cur:
+		cur.execute("SELECT * FROM t_auction WHERE auction_id = %s FOR UPDATE", (auction_id,))
+		auction = cur.fetchone()
+		if (auction is None):
+			abort(404)
+		append_localtime(auction)
+		auction["ended"] = (auction["ended"] != 0)
 
 	if g.datetime_now >= auction["datetime_end"] or auction["ended"]:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="オークションはすでに終了しています。") # TODO i18n
 
-	cur = db.get_dict_cursor()
-	cur.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC LIMIT %s", (auction_id, auction["quantity"],))
-	bids = cur.fetchall()
-	cur.close()
+	with db.get_dict_cursor() as cur:
+		cur.execute("SELECT * FROM t_bid WHERE auction_id = %s ORDER BY price DESC, datetime_bid ASC LIMIT %s", (auction_id, auction["quantity"],))
+		bids = cur.fetchall()
 
 	if (len(bids) < auction["quantity"]):
 		price_bid_min = auction["price_start"]
@@ -132,9 +123,8 @@ def bid(auction_id):
 	if auction["price_prompt"] is not None and price >= auction["price_prompt"]:
 		price = auction["price_prompt"]
 
-	cur = db.get_cursor()
-	cur.execute("INSERT INTO t_bid (auction_id, username, price, datetime_bid) VALUES (%s, %s, %s, %s)", (auction_id, username, price, g.datetime_now,))
-	cur.close()
+	with db.get_cursor() as cur:
+		cur.execute("INSERT INTO t_bid (auction_id, username, price, datetime_bid) VALUES (%s, %s, %s, %s)", (auction_id, username, price, g.datetime_now,))
 
 	if auction["price_prompt"] is not None and price >= auction["price_prompt"]:
 		newbid = { "auction_id": auction_id, "username": username, "price": price, "datetime_bid": g.datetime_now }
@@ -207,12 +197,11 @@ def new():
 	if description is None or description == "":
 		abort(400)
 
-	cur = db.get_cursor()
-	cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_min_step, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-		(itemname, quantity, username, g.datetime_now, datetime_end, g.datetime_now, price_start, price_prompt, price_min_step, location, description,))
-	cur.execute("SELECT LAST_INSERT_ID() FROM t_auction")
-	auction_id = cur.fetchone()[0]
-	cur.close()
+	with db.get_cursor() as cur:
+		cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_min_step, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			(itemname, quantity, username, g.datetime_now, datetime_end, g.datetime_now, price_start, price_prompt, price_min_step, location, description,))
+		cur.execute("SELECT LAST_INSERT_ID() FROM t_auction")
+		auction_id = cur.fetchone()[0]
 
 	db.commit()
 
@@ -235,6 +224,5 @@ def hammer(auction, bids, ended, expired):
 	if not ended:
 		return
 
-	cur = db.get_cursor()
-	cur.execute("UPDATE t_auction SET ended = 1 WHERE auction_id = %s", (auction["auction_id"],))
-	cur.close()
+	with db.get_cursor() as cur:
+		cur.execute("UPDATE t_auction SET ended = 1 WHERE auction_id = %s", (auction["auction_id"],))
