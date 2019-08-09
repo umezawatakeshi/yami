@@ -43,7 +43,7 @@
 <p>まだ入札はありません。</p>
 {% endif %}
 {% if not auction.ended %}
-<form action="{{ url_for('yami.bid', auction_id=auction.auction_id) }}" method="post">
+<form action="{{ url_for('view.bid', auction_id=auction.auction_id) }}" method="post">
 <table border="1">
 <tr>
 <th>入札者名 <small>必須</small></th>

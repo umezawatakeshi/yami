@@ -27,8 +27,8 @@ def create_app(test_config=None):
 	from . import db
 	db.init_db(app)
 
-	from . import yami
-	app.register_blueprint(yami.bp)
+	from . import views
+	app.register_blueprint(views.bp)
 
 	@app.before_request
 	def before_request():

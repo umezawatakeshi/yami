@@ -22,7 +22,7 @@
 {% for auction in auctions %}
 <tr>
 <td>{{ auction.auction_id }}</td>
-<td><a href="{{ url_for('yami.info', auction_id=auction.auction_id) }}">{{ auction.itemname }}</a></td>
+<td><a href="{{ url_for('view.info', auction_id=auction.auction_id) }}">{{ auction.itemname }}</a></td>
 <td>{{ auction.quantity }}</td>
 <td>{{ auction.username }}</td>
 <td>{{ auction.datetime_start_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
@@ -37,5 +37,5 @@
 {% else %}
 <p>開催中のオークションはありません。</p>
 {% endif %}
-<p><a href="{{ url_for('yami.newform') }}">出品する</a></p>
+<p><a href="{{ url_for('view.newform') }}">出品する</a></p>
 {% endblock %}

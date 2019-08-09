@@ -3,7 +3,7 @@ from . import db, logic
 from tzlocal import get_localzone
 from datetime import datetime, timezone
 
-bp = Blueprint("yami", __name__)
+bp = Blueprint("view", __name__)
 
 
 @bp.route("/", defaults={"page": 1})
