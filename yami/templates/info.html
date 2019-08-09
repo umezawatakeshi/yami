@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-{% if ended %}
+{% if auction.ended %}
 <p>このオークションは終了しています。</p>
 {% endif %}
 <table border="1">
@@ -42,7 +42,7 @@
 {% else %}
 <p>まだ入札はありません。</p>
 {% endif %}
-{% if not ended %}
+{% if not auction.ended %}
 <form action="{{ url_for('yami.bid', auction_id=auction.auction_id) }}" method="post">
 <table border="1">
 <tr>
@@ -52,8 +52,8 @@
 <tr>
 <th>入札価格 <small>必須</small></th>
 <td>
-<input type="hidden" name="price_bid_min" value="{{ price_bid_min }}"/>
-<input type="radio" id="bidtype_min" name="bidtype" value="min" checked="checked"/><label for="bidtype_min">最低入札価格（{{ "{:,d}".format(price_bid_min) + "円" }}）で入札</label><br/>
+<input type="hidden" name="price_bid_min" value="{{ auction.price_bid_min }}"/>
+<input type="radio" id="bidtype_min" name="bidtype" value="min" checked="checked"/><label for="bidtype_min">最低入札価格（{{ "{:,d}".format(auction.price_bid_min) + "円" }}）で入札</label><br/>
 <input type="radio" id="bidtype_normal" name="bidtype" value="normal"/><label for="bidtype_normal">金額を指定して入札</label> <input type="number" id="price" name="price" value="{{ price_bid_min }}"/>{{ "円" }}<br/>
 {% if auction.price_prompt != None %}
 <input type="hidden" name="price_prompt" value="{{ auction.price_prompt }}"/>
