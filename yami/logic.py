@@ -53,12 +53,21 @@ def get_auction_info(auction_id, for_update):
 	for bid in bids:
 		append_localtime(bid)
 
+	if len(bids) == 0:
+		auction["price_current_high"] = None
+	else:
+		auction["price_current_high"] = bids[0]["price"]
 
 	if len(bids) < auction["quantity"]:
+		auction["price_current_low"] = None
+	else:
+		auction["price_current_low"] = bids[auction["quantity"] - 1]["price"]
+
+	if auction["price_current_low"] is None:
 		auction["price_bid_min"] = auction["price_start"]
 	else:
-		price_step_min = calc_price_step_min(auction, bids)
-		auction["price_bid_min"] = bids[auction["quantity"] - 1]["price"] + price_step_min
+		price_step_min = calc_price_step_min(auction)
+		auction["price_bid_min"] = auction["price_current_low"] + price_step_min
 		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
 			auction["price_bid_min"] = auction["price_prompt"]
 
@@ -152,12 +161,12 @@ def hammer(auction, bids, ended, expired):
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET ended = 1 WHERE auction_id = %s", (auction["auction_id"],))
 
-def calc_price_step_min(auction, bids):
+def calc_price_step_min(auction):
 	price_step_min = current_app.config["YAMI_PRICE_STEP_MIN"]
 	if auction["price_step_min"] > price_step_min:
 		price_step_min = auction["price_step_min"]
 
-	price_reference = bids[auction["quantity"] - 1]["price"] if current_app.config["YAMI_PRICE_STEP_FROM_CURRENT_PRICE"] else auction["price_start"]
+	price_reference = auction["price_current_low"] if current_app.config["YAMI_PRICE_STEP_FROM_CURRENT_PRICE"] else auction["price_start"]
 	if price_reference == 0:
 		return price_step_min
 
