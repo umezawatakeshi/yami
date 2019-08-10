@@ -3,11 +3,11 @@ import pymysql
 
 def init_db(app):
 	app.teardown_appcontext(close_db)
-	app.config["MYSQL_PYMYSQL_KWARGS"]["charset"] = "utf8mb4"
+	app.config["MYSQL_CONNECT_KWARGS"]["charset"] = "utf8mb4"
 
 def get_db():
 	if "db" not in g:
-		g.db = pymysql.connect(**current_app.config["MYSQL_PYMYSQL_KWARGS"])
+		g.db = pymysql.connect(**current_app.config["MYSQL_CONNECT_KWARGS"])
 	return g.db
 
 def get_cursor():
