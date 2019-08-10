@@ -132,8 +132,8 @@ def new():
 		abort(400)
 	if auction["location"] is None:
 		auction["location"] = ""
-	if auction["description"] is None or auction["description"] == "":
-		abort(400)
+	if auction["description"] is None:
+		auction["description"] = ""
 
 	auction_id = logic.new_auction(auction)
 
