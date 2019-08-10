@@ -19,10 +19,17 @@
 
 from flask import Flask, g
 from datetime import datetime, timezone
+from decimal import Decimal
 
 def create_app(test_config=None):
 	app = Flask(__name__, instance_relative_config = True)
 	app.config.from_pyfile("config.py")
+
+	orig = app.config["YAMI_PRICE_STEP_RULE"]
+	dcml = {}
+	for k in orig:
+		dcml[Decimal(k)] = Decimal(orig[k])
+	app.config["YAMI_PRICE_STEP_RULE"] = dcml
 
 	from . import db
 	db.init_db(app)

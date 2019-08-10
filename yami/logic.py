@@ -2,6 +2,8 @@ from flask import current_app, g, request
 from . import db
 from tzlocal import get_localzone
 from datetime import datetime, timezone
+import decimal
+from decimal import Decimal
 
 
 def get_auction_list(limit, offset, ended):
@@ -51,13 +53,11 @@ def get_auction_info(auction_id, for_update):
 	for bid in bids:
 		append_localtime(bid)
 
-	price_step_min = current_app.config["YAMI_PRICE_STEP_MIN"]
-	if (auction["price_step_min"] > price_step_min):
-		price_step_min = auction["price_step_min"]
 
 	if len(bids) < auction["quantity"]:
 		auction["price_bid_min"] = auction["price_start"]
 	else:
+		price_step_min = calc_price_step_min(auction, bids)
 		auction["price_bid_min"] = bids[auction["quantity"] - 1]["price"] + price_step_min
 		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
 			auction["price_bid_min"] = auction["price_prompt"]
@@ -151,3 +151,30 @@ def hammer(auction, bids, ended, expired):
 
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET ended = 1 WHERE auction_id = %s", (auction["auction_id"],))
+
+def calc_price_step_min(auction, bids):
+	price_step_min = current_app.config["YAMI_PRICE_STEP_MIN"]
+	if auction["price_step_min"] > price_step_min:
+		price_step_min = auction["price_step_min"]
+
+	price_reference = bids[auction["quantity"] - 1]["price"] if current_app.config["YAMI_PRICE_STEP_FROM_CURRENT_PRICE"] else auction["price_start"]
+	if price_reference == 0:
+		return price_step_min
+
+	price_reference = Decimal(price_reference)
+	exponent = price_reference.adjusted()
+	exp10 = Decimal(1).scaleb(exponent)
+	mantissa = price_reference / exp10
+	rule = current_app.config["YAMI_PRICE_STEP_RULE"]
+	rkeys = sorted(rule.keys())
+	for i in range(len(rule) - 1):
+		if mantissa >= rkeys[i] and mantissa < rkeys[i+1]:
+			step_from_rule = exp10 * rule[rkeys[i]]
+			break
+	else:
+		step_from_rule = exp10 * rule[rkeys[-1]]
+	step_from_rule = int(step_from_rule)
+
+	if step_from_rule > price_step_min:
+		price_step_min = step_from_rule
+	return price_step_min
