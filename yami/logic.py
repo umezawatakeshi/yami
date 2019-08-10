@@ -1,7 +1,7 @@
 from flask import current_app, g, request
 from . import db
 from tzlocal import get_localzone
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import decimal
 from decimal import Decimal
 
@@ -113,6 +113,11 @@ def bid_auction(newbid):
 			if bid["price"] >= auction["price_prompt"]:
 				rest -= 1
 		hammer(auction, (newbid,), rest <= 1, False)
+	else:
+		extended = g.datetime_now + timedelta(seconds=current_app.config["YAMI_AUTO_EXTENSION"])
+		if auction["datetime_end"] < extended:
+			with db.get_cursor() as cur:
+				cur.execute("UPDATE t_auction SET datetime_end = %s WHERE auction_id = %s", (extended, auction["auction_id"]))
 
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
