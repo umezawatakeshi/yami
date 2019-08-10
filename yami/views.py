@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, g, abort, redirect, render_template, url_for, request
 from . import db, logic
 from tzlocal import get_localzone
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 bp = Blueprint("view", __name__)
 
@@ -110,7 +110,7 @@ def new():
 	elif datetime_end_type == "duration":
 		if datetime_end_days is None or datetime_end_days <= 0:
 			abort(400)
-		auction["datetime_end"] = datetime.fromtimestamp(g.datetime_now.timestamp() + 86400 * datetime_end_days, timezone.utc)
+		auction["datetime_end"] = g.datetime_now + timedelta(days=datetime_end_days)
 	elif datetime_end_type == "datetime":
 		datetime_end_date = datetime.strptime(datetime_end_date, "%Y-%m-%d")
 		datetime_end_time = datetime.strptime(datetime_end_time, "%H:%M")
