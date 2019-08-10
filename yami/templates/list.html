@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "price_current.html" as price_current %}
 
 {% block h1 %}
 <h1>{% block title %}オークション一覧{% endblock %}</h1>
@@ -27,7 +28,7 @@
 <td>{{ auction.username }}</td>
 <td>{{ auction.datetime_start_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
 <td>{{ auction.datetime_end_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-<td>{{ "{:,d}".format(auction.price_current_high) + "円" if auction.price_current_high != None }}</td>
+<td>{{ price_current.price_current(auction) }}</td>
 <td>{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td>
 <td>{{ "{:,d}".format(auction.price_start) + "円" }}</td>
 <td>{{ auction.num_bids }}</td>

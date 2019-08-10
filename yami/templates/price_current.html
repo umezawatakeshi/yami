@@ -1,0 +1,17 @@
+{% macro price_current(auction) -%}
+{% if auction.quantity == 1 -%}
+    {% if auction.price_current_high == None -%}
+        {{ "{:,d}".format(auction.price_start) + "円" }}
+    {%- else -%}
+        {{ "{:,d}".format(auction.price_current_high) + "円" }}
+    {%- endif %}
+{%- else -%}
+    {% if auction.price_current_high == None -%}
+        {{ "{:,d}".format(auction.price_start) + "円" }}
+    {%- elif auction.price_current_low == None -%}
+        {{ "{:,d}".format(auction.price_start) + "円" }} - {{ "{:,d}".format(auction.price_current_high) + "円" }}
+    {%- else -%}
+        {{ "{:,d}".format(auction.price_current_low) + "円" }} - {{ "{:,d}".format(auction.price_current_high) + "円" }}
+    {%- endif %}
+{%- endif %}
+{%- endmacro %}
