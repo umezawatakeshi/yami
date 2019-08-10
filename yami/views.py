@@ -17,6 +17,9 @@ def list(page):
 
 	db.commit()
 
+	for auction in auctions:
+		logic.append_localtime(auction)
+
 	return render_template("list.html", current_app=current_app, auctions=auctions, page=page)
 
 
@@ -27,6 +30,10 @@ def info(auction_id):
 		abort(404)
 
 	db.commit()
+
+	logic.append_localtime(auction)
+	for bid in bids:
+		logic.append_localtime(bid)
 
 	return render_template("info.html", current_app=current_app, auction=auction, bids=bids)
 

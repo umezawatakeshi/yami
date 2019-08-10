@@ -17,7 +17,7 @@ def get_auction_list(limit, offset, ended):
 		auctions = cur.fetchall()
 
 	for auction in auctions:
-		append_localtime(auction)
+		aware_utc_datetime(auction)
 		if auction["num_bids"] is None:
 			auction["num_bids"] = 0
 		auction["ended"] = (auction["ended"] != 0 or auction["datetime_end"] <= g.datetime_now)
@@ -36,7 +36,7 @@ def get_auction_info(auction_id, for_update):
 		auction = cur.fetchone()
 		if auction is None:
 			return None, None
-		append_localtime(auction)
+		aware_utc_datetime(auction)
 		auction["ended"] = (auction["ended"] != 0 or auction["datetime_end"] <= g.datetime_now)
 
 	if for_update:
@@ -51,7 +51,7 @@ def get_auction_info(auction_id, for_update):
 		bids = cur.fetchall()
 
 	for bid in bids:
-		append_localtime(bid)
+		aware_utc_datetime(bid)
 
 	if len(bids) == 0:
 		auction["price_current_high"] = None
@@ -127,7 +127,7 @@ def check_expiration():
 		auctions = cur.fetchall()
 
 	for auction in auctions:
-		append_localtime(auction)
+		aware_utc_datetime(auction)
 		auction["ended"] = (auction["ended"] != 0)
 
 		with db.get_dict_cursor() as cur:
@@ -142,11 +142,16 @@ def check_expiration():
 	db.commit()
 
 
-def append_localtime(dic):
-	appended = dict()
+def aware_utc_datetime(dic):
 	for key in dic.keys():
 		if key.startswith("datetime_"):
 			dic[key] = dic[key].replace(tzinfo=timezone.utc)
+	return dic
+
+def append_localtime(dic):
+	appended = dict()
+	for key in dic.keys():
+		if key.startswith("datetime_") and not key.endswith("_local"):
 			appended[key + "_local"] = datetime.fromtimestamp(dic[key].timestamp(), tz=get_localzone())
 	dic.update(appended)
 	return dic
