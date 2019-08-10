@@ -114,6 +114,9 @@ def bid_auction(newbid):
 				rest -= 1
 		hammer(auction, (newbid,), rest <= 1, False)
 
+	with db.get_cursor() as cur:
+		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
+
 	db.commit()
 
 	return BID_OK
@@ -146,6 +149,9 @@ def check_expiration():
 			bids = filter(lambda bid: bid["price"] < auction["price_prompt"], bids)
 
 		hammer(auction, bids, True, True)
+
+		with db.get_cursor() as cur:
+			cur.execute("UPDATE t_auction SET datetime_update = datetime_end WHERE auction_id = %s", (auction["auction_id"],))
 
 	db.commit()
 
