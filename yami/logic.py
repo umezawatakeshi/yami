@@ -11,7 +11,7 @@ def get_auction_list(limit, offset, ended):
 		flipcond = ""
 
 	with db.get_dict_cursor() as cur:
-		cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid USING(auction_id) WHERE" + flipcond + " NOT ended AND datetime_end > %s LIMIT %s OFFSET %s", (g.datetime_now, limit, offset))
+		cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid USING(auction_id) WHERE" + flipcond + " (ended = false AND datetime_end > %s) ORDER BY datetime_end ASC LIMIT %s OFFSET %s", (g.datetime_now, limit, offset))
 		auctions = cur.fetchall()
 
 	for auction in auctions:
