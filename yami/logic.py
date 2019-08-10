@@ -51,10 +51,14 @@ def get_auction_info(auction_id, for_update):
 	for bid in bids:
 		append_localtime(bid)
 
+	price_step_min = current_app.config["YAMI_PRICE_STEP_MIN"]
+	if (auction["price_step_min"] > price_step_min):
+		price_step_min = auction["price_step_min"]
+
 	if len(bids) < auction["quantity"]:
 		auction["price_bid_min"] = auction["price_start"]
 	else:
-		auction["price_bid_min"] = bids[auction["quantity"] - 1]["price"] + auction["price_step_min"]
+		auction["price_bid_min"] = bids[auction["quantity"] - 1]["price"] + price_step_min
 		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
 			auction["price_bid_min"] = auction["price_prompt"]
 
