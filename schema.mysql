@@ -11,7 +11,7 @@ CREATE TABLE t_auction (
     quantity        INT                          NOT NULL,
     price_start     INT                          NOT NULL,
     price_prompt    INT,
-    price_min_step  INT                          NOT NULL,
+    price_step_min  INT                          NOT NULL,
     datetime_start  DATETIME                     NOT NULL,
     datetime_end    DATETIME                     NOT NULL,
     datetime_update DATETIME                     NOT NULL,

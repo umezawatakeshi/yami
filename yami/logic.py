@@ -54,7 +54,7 @@ def get_auction_info(auction_id, for_update):
 	if len(bids) < auction["quantity"]:
 		auction["price_bid_min"] = auction["price_start"]
 	else:
-		auction["price_bid_min"] = bids[auction["quantity"] - 1]["price"] + auction["price_min_step"]
+		auction["price_bid_min"] = bids[auction["quantity"] - 1]["price"] + auction["price_step_min"]
 		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
 			auction["price_bid_min"] = auction["price_prompt"]
 
@@ -100,8 +100,8 @@ def bid_auction(newbid):
 
 def new_auction(auction):
 	with db.get_cursor() as cur:
-		cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_min_step, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-			(auction["itemname"], auction["quantity"], auction["username"], g.datetime_now, auction["datetime_end"], g.datetime_now, auction["price_start"], auction["price_prompt"], auction["price_min_step"], auction["location"], auction["description"]))
+		cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_step_min, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			(auction["itemname"], auction["quantity"], auction["username"], g.datetime_now, auction["datetime_end"], g.datetime_now, auction["price_start"], auction["price_prompt"], auction["price_step_min"], auction["location"], auction["description"]))
 		cur.execute("SELECT LAST_INSERT_ID() FROM t_auction")
 		auction_id = cur.fetchone()[0]
 

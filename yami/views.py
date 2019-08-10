@@ -87,8 +87,8 @@ def new():
 	auction["price_start"] = request.form.get("price_start", type=int)
 	auction["price_prompt"] = request.form.get("price_prompt", type=int)
 	price_prompt_str = request.form.get("price_prompt")
-	auction["price_min_step"] = request.form.get("price_min_step", type=int)
-	price_min_step_str = request.form.get("price_min_step")
+	auction["price_step_min"] = request.form.get("price_step_min", type=int)
+	price_min_step_str = request.form.get("price_step_min")
 	auction["location"] = request.form.get("location")
 	auction["description"] = request.form.get("description")
 
@@ -120,8 +120,8 @@ def new():
 	elif auction["price_prompt"] is None or auction["price_prompt"] < auction["price_start"]:
 		abort(400)
 	if price_min_step_str is None or price_min_step_str == "":
-		auction["price_min_step"] = 0
-	elif auction["price_min_step"] is None or auction["price_min_step"] <= 0:
+		auction["price_step_min"] = 0
+	elif auction["price_step_min"] is None or auction["price_step_min"] <= 0:
 		abort(400)
 	if auction["location"] is None:
 		auction["location"] = ""
