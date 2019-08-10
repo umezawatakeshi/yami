@@ -29,6 +29,8 @@ def get_auction_list(limit, offset, ended):
 					auction["price_current_low"] = None
 				else:
 					auction["price_current_low"] = row[0]
+		else:
+			auction["price_current_low"] = auction["price_current_high"]
 
 	return auctions
 
