@@ -21,6 +21,14 @@ def get_auction_list(limit, offset, ended):
 		if auction["num_bids"] is None:
 			auction["num_bids"] = 0
 		auction["ended"] = (auction["ended"] != 0 or auction["datetime_end"] <= g.datetime_now)
+		if auction["quantity"] > 1:
+			with db.get_cursor() as cur:
+				cur.execute("SELECT price FROM t_bid WHERE auction_id = %s ORDER BY price LIMIT 1 OFFSET %s", (auction["auction_id"], auction["quantity"]-1))
+				row = cur.fetchone()
+				if row is None:
+					auction["price_current_low"] = None
+				else:
+					auction["price_current_low"] = row[0]
 
 	return auctions
 
