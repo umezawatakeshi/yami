@@ -7,5 +7,11 @@
 <body>
 {% block h1 %}{% endblock %}
 {% block content %}{% endblock %}
+<hr/>
+<p>
+<a href="{{ url_for('view.held_list', page=1) }}">[トップページ（開催中のオークションの一覧）]</a>
+<a href="{{ url_for('view.ended_list', page=1) }}">[終了したオークションの一覧]</a>
+<a href="{{ url_for('view.newform') }}">[出品する]</a>
+</p>
 </body>
 </html>
