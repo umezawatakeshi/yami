@@ -1,8 +1,24 @@
 {% extends "base.html" %}
 {% import "price_current.html" as price_current %}
 
+{% macro type() -%}
+{% if ended -%}
+終了した
+{%- else -%}
+開催中の
+{%- endif %}
+{%- endmacro %}
+
+{% macro page_url(page) -%}
+{% if ended -%}
+{{ url_for('view.ended_list', page=page) }}
+{%- else -%}
+{{ url_for('view.held_list', page=page) }}
+{%- endif %}
+{%- endmacro %}
+
 {% block h1 %}
-<h1>{% block title %}オークション一覧{% endblock %}</h1>
+<h1>{% block title %}{{ type() }}オークション一覧{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -37,20 +53,20 @@
 </table>
 <hr/>
 {% if page != 1 %}
-<a href="{{ url_for('view.list', page=page-1) }}">&lt;&lt;前のページ</a>
+<a href="{{ page_url(page=page-1) }}">&lt;&lt;前のページ</a>
 {% endif %}
 {% for p in range(1, num_pages+1) %}
 {% if p != page %}
-<a href="{{ url_for('view.list', page=p) }}">[{{ p }}]</a>
+<a href="{{ page_url(page=p) }}">[{{ p }}]</a>
 {% else %}
 <b>[{{ p }}]</b>
 {% endif %}
 {% endfor %}
 {% if page != num_pages %}
-<a href="{{ url_for('view.list', page=page+1) }}">次のページ&gt;&gt;</a>
+<a href="{{ page_url(page=page+1) }}">次のページ&gt;&gt;</a>
 {% endif %}
 {% else %}
-<p>開催中のオークションはありません。</p>
+<p>{{ type() }}オークションはありません。</p>
 {% endif %}
 <hr/>
 <p><a href="{{ url_for('view.newform') }}">出品する</a></p>

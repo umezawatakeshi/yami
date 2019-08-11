@@ -8,12 +8,19 @@ bp = Blueprint("view", __name__)
 
 @bp.route("/", defaults={"page": 1})
 @bp.route("/list/<int:page>")
-def list(page):
+def held_list(page):
+	return auction_list(page, False)
+
+@bp.route("/ended/<int:page>")
+def ended_list(page):
+	return auction_list(page, True)
+
+def auction_list(page, ended):
 	if (page <= 0):
 		abort(404)
 
 	napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
-	auctions, num_auctions = logic.get_auction_list(napp, napp * (page - 1), False)
+	auctions, num_auctions = logic.get_auction_list(napp, napp * (page - 1), ended)
 
 	db.commit()
 
@@ -21,7 +28,7 @@ def list(page):
 		logic.append_localtime(auction)
 	num_pages = (num_auctions + napp - 1) // napp
 
-	return render_template("list.html", current_app=current_app, auctions=auctions, page=page, num_pages=num_pages)
+	return render_template("list.html", current_app=current_app, ended=ended, auctions=auctions, page=page, num_pages=num_pages)
 
 
 @bp.route("/auction/<int:auction_id>")
