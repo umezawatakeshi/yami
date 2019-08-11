@@ -13,14 +13,15 @@ def list(page):
 		abort(404)
 
 	napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
-	auctions = logic.get_auction_list(napp, napp * (page - 1), False)
+	auctions, num_auctions = logic.get_auction_list(napp, napp * (page - 1), False)
 
 	db.commit()
 
 	for auction in auctions:
 		logic.append_localtime(auction)
+	num_pages = (num_auctions + napp - 1) // napp
 
-	return render_template("list.html", current_app=current_app, auctions=auctions, page=page)
+	return render_template("list.html", current_app=current_app, auctions=auctions, page=page, num_pages=num_pages)
 
 
 @bp.route("/auction/<int:auction_id>")

@@ -12,6 +12,10 @@ def get_auction_list(limit, offset, ended):
 	else:
 		flipcond = ""
 
+	with db.get_cursor() as cur:
+		cur.execute("SELECT COUNT(auction_id) FROM t_auction WHERE" + flipcond + " (ended = false AND datetime_end > %s)", (g.datetime_now,))
+		num_auctions = cur.fetchone()[0]
+
 	with db.get_dict_cursor() as cur:
 		cur.execute("SELECT * FROM t_auction LEFT JOIN (SELECT auction_id, MAX(price) as price_current_high, COUNT(price) as num_bids FROM t_bid GROUP BY auction_id) AS maxbid USING(auction_id) WHERE" + flipcond + " (ended = false AND datetime_end > %s) ORDER BY datetime_end ASC LIMIT %s OFFSET %s", (g.datetime_now, limit, offset))
 		auctions = cur.fetchall()
@@ -32,7 +36,7 @@ def get_auction_list(limit, offset, ended):
 		else:
 			auction["price_current_low"] = auction["price_current_high"]
 
-	return auctions
+	return auctions, num_auctions
 
 
 def get_auction_info(auction_id, for_update):

@@ -35,8 +35,23 @@
 </tr>
 {% endfor %}
 </table>
+<hr/>
+{% if page != 1 %}
+<a href="{{ url_for('view.list', page=page-1) }}">&lt;&lt;前のページ</a>
+{% endif %}
+{% for p in range(1, num_pages+1) %}
+{% if p != page %}
+<a href="{{ url_for('view.list', page=p) }}">[{{ p }}]</a>
+{% else %}
+<b>[{{ p }}]</b>
+{% endif %}
+{% endfor %}
+{% if page != num_pages %}
+<a href="{{ url_for('view.list', page=page+1) }}">次のページ&gt;&gt;</a>
+{% endif %}
 {% else %}
 <p>開催中のオークションはありません。</p>
 {% endif %}
+<hr/>
 <p><a href="{{ url_for('view.newform') }}">出品する</a></p>
 {% endblock %}
