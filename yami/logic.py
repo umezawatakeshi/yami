@@ -35,6 +35,7 @@ def get_auction_list(limit, offset, ended):
 					auction["price_current_low"] = row[0]
 		else:
 			auction["price_current_low"] = auction["price_current_high"]
+		set_price_bid_min(auction)
 
 	return auctions, num_auctions
 
@@ -77,13 +78,7 @@ def get_auction_info(auction_id, for_update):
 	else:
 		auction["price_current_low"] = bids[auction["quantity"] - 1]["price"]
 
-	if auction["price_current_low"] is None:
-		auction["price_bid_min"] = auction["price_start"]
-	else:
-		price_step_min = calc_price_step_min(auction)
-		auction["price_bid_min"] = auction["price_current_low"] + price_step_min
-		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
-			auction["price_bid_min"] = auction["price_prompt"]
+	set_price_bid_min(auction)
 
 	return auction, bids
 
@@ -217,3 +212,12 @@ def calc_price_step_min(auction):
 	if step_from_rule > price_step_min:
 		price_step_min = step_from_rule
 	return price_step_min
+
+def set_price_bid_min(auction):
+	if auction["price_current_low"] is None:
+		auction["price_bid_min"] = auction["price_start"]
+	else:
+		price_step_min = calc_price_step_min(auction)
+		auction["price_bid_min"] = auction["price_current_low"] + price_step_min
+		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
+			auction["price_bid_min"] = auction["price_prompt"]
