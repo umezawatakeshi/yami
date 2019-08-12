@@ -1,6 +1,6 @@
 from flask import current_app, g, request
 from . import db
-from tzlocal import get_localzone
+import tzlocal
 from datetime import datetime, timedelta, timezone
 import decimal
 from decimal import Decimal
@@ -172,7 +172,7 @@ def append_localtime(dic):
 	appended = dict()
 	for key in dic.keys():
 		if key.startswith("datetime_") and not key.endswith("_local"):
-			appended[key + "_local"] = datetime.fromtimestamp(dic[key].timestamp(), tz=get_localzone())
+			appended[key + "_local"] = datetime.fromtimestamp(dic[key].timestamp(), tz=tzlocal.get_localzone())
 	dic.update(appended)
 	return dic
 
