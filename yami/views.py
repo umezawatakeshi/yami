@@ -123,7 +123,7 @@ def new():
 		datetime_end_date = datetime.strptime(datetime_end_date, "%Y-%m-%d")
 		datetime_end_time = datetime.strptime(datetime_end_time, "%H:%M")
 		datetime_end_local = get_localzone().localize(datetime_end_date.replace(hour=datetime_end_time.time().hour, minute=datetime_end_time.time().minute))
-		auction["datetime_end"] = datetime.fromtimestamp(datetime_end_local.timestamp(), tz=timezone.utc)
+		auction["datetime_end"] = datetime_end_local.astimezone(timezone.utc)
 		if auction["datetime_end"] <= g.datetime_now:
 			abort(400)
 	else:
