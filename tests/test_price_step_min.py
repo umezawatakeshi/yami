@@ -17,7 +17,6 @@ def test_calc_price_step_min_when_zero_price(config_price_step_min, auction_pric
 			2: "0.4",
 			4: "1",
 		},
-		"MYSQL_CONNECT_KWARGS": {},
 	})
 	auction = {
 		"price_step_min": auction_price_step_min,
@@ -49,7 +48,6 @@ def test_calc_price_step_min_from_start_price(price_start, result):
 			2: "0.4",
 			4: "1",
 		},
-		"MYSQL_CONNECT_KWARGS": {},
 	})
 	auction = {
 		"price_step_min": 1000,
@@ -85,7 +83,6 @@ def test_calc_price_step_min_from_current_price(price_current_low, result):
 			2: "0.4",
 			4: "1",
 		},
-		"MYSQL_CONNECT_KWARGS": {},
 	})
 	auction = {
 		"price_step_min": 1000,
@@ -116,7 +113,6 @@ def test_set_price_bid_min(price_start, price_prompt, price_current_low, result)
 			2: "0.4",
 			4: "1",
 		},
-		"MYSQL_CONNECT_KWARGS": {},
 	})
 	auction = {
 		"price_step_min": 1000,

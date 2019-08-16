@@ -28,11 +28,12 @@ def create_app(test_config=None):
 	else:
 		app.config.from_mapping(test_config)
 
-	orig = app.config["YAMI_PRICE_STEP_RULE"]
-	dcml = {}
-	for k in orig:
-		dcml[Decimal(k)] = Decimal(orig[k])
-	app.config["YAMI_PRICE_STEP_RULE"] = dcml
+	if "YAMI_PRICE_STEP_RULE" in app.config:
+		orig = app.config["YAMI_PRICE_STEP_RULE"]
+		dcml = {}
+		for k in orig:
+			dcml[Decimal(k)] = Decimal(orig[k])
+		app.config["YAMI_PRICE_STEP_RULE"] = dcml
 
 	from . import db
 	db.init_db(app)

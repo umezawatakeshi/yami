@@ -3,7 +3,8 @@ import pymysql
 
 def init_db(app):
 	app.teardown_appcontext(close_db)
-	app.config["MYSQL_CONNECT_KWARGS"]["charset"] = "utf8mb4"
+	if "MYSQL_CONNECT_KWARGS" in app.config:
+		app.config["MYSQL_CONNECT_KWARGS"]["charset"] = "utf8mb4"
 
 def get_db():
 	if "db" not in g:
