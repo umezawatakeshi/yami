@@ -115,7 +115,7 @@ def bid_auction(newbid):
 		for bid in bids:
 			if bid["price"] >= auction["price_prompt"]:
 				rest -= 1
-		hammer(auction, (newbid,), rest <= 1, False)
+		hammer(auction, [newbid], rest <= 1, False)
 	else:
 		extended = g.datetime_now + timedelta(seconds=current_app.config["YAMI_AUTO_EXTENSION"])
 		if auction["datetime_end"] < extended:
