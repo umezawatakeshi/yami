@@ -104,6 +104,8 @@ def bid_auction(newbid):
 	if auction["price_prompt"] is not None and newbid["price"] >= auction["price_prompt"]:
 		newbid["price"] = auction["price_prompt"]
 
+	newbid["datetime_bid"] = g.datetime_now
+
 	with db.get_cursor() as cur:
 		cur.execute("INSERT INTO t_bid (auction_id, username, price, datetime_bid) VALUES (%s, %s, %s, %s)", (newbid["auction_id"], newbid["username"], newbid["price"], g.datetime_now,))
 		cur.execute("SELECT LAST_INSERT_ID() FROM t_bid")
