@@ -2,3 +2,4 @@ __pycache__/
 instance/*
 !instance/config.sample.py
 .cache/
+.vscode/
