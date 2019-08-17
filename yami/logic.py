@@ -144,7 +144,7 @@ def new_auction(auction):
 
 def check_expiration():
 	with db.get_dict_cursor() as cur:
-		cur.execute("SELECT * FROM t_auction WHERE NOT ended AND datetime_end <= %s FOR UPDATE", (g.datetime_now,))
+		cur.execute("SELECT * FROM t_auction WHERE ended = false AND datetime_end <= %s FOR UPDATE", (g.datetime_now,))
 		auctions = cur.fetchall()
 
 	for auction in auctions:
