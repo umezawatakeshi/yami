@@ -22,10 +22,12 @@ def get_auction_list(limit, offset, ended):
 
 	for auction in auctions:
 		aware_utc_datetime(auction)
+		auction["ended"] = (auction["ended"] != 0 or auction["datetime_end"] <= g.datetime_now)
 		if auction["num_bids"] is None:
 			auction["num_bids"] = 0
-		auction["ended"] = (auction["ended"] != 0 or auction["datetime_end"] <= g.datetime_now)
-		if auction["quantity"] > 1:
+		if auction["num_bids"] < auction["quantity"]:
+			auction["price_current_low"] = None
+		elif auction["quantity"] > 1:
 			with db.get_cursor() as cur:
 				cur.execute("SELECT price FROM t_bid WHERE auction_id = %s ORDER BY price LIMIT 1 OFFSET %s", (auction["auction_id"], auction["quantity"]-1))
 				row = cur.fetchone()
