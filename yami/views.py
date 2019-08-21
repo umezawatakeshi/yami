@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, g, abort, redirect, render_template, url_for, request
-from . import db, logic
+from . import logic
 from tzlocal import get_localzone
 from datetime import datetime, timedelta, timezone
 
@@ -22,7 +22,7 @@ def auction_list(page, ended):
 	napp = current_app.config["YAMI_NUM_AUCTIONS_PER_PAGE"]
 	auctions, num_auctions = logic.get_auction_list(napp, napp * (page - 1), ended)
 
-	db.commit()
+	logic.commit()
 
 	for auction in auctions:
 		logic.append_localtime(auction)
@@ -37,7 +37,7 @@ def info(auction_id):
 	if auction is None:
 		abort(404)
 
-	db.commit()
+	logic.commit()
 
 	logic.append_localtime(auction)
 	for bid in bids:
@@ -72,6 +72,9 @@ def bid(auction_id):
 		abort(400)
 
 	ret = logic.bid_auction({"auction_id": auction_id, "price": price, "username": username, "datetime_bid": g.datetime_now})
+
+	logic.commit()
+
 	if ret == logic.BID_OK:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=True, price=price)
 	elif ret == logic.BID_ERROR_NOT_FOUND:
@@ -145,6 +148,6 @@ def new():
 
 	auction_id = logic.new_auction(auction)
 
-	db.commit()
+	logic.commit()
 
 	return render_template("new.html", current_app=current_app, auction_id=auction_id, succeeded=True)

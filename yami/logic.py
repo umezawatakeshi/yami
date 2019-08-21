@@ -127,8 +127,6 @@ def bid_auction(newbid):
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
 
-	db.commit()
-
 	return BID_OK
 
 
@@ -225,3 +223,9 @@ def set_price_bid_min(auction):
 		auction["price_bid_min"] = auction["price_current_low"] + price_step_min
 		if auction["price_prompt"] is not None and auction["price_bid_min"] > auction["price_prompt"]:
 			auction["price_bid_min"] = auction["price_prompt"]
+
+def commit():
+	db.commit()
+
+def rollback():
+	db.rollback()
