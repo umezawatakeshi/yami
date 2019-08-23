@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
 instance/*
-!instance/config.sample.py
+!instance/*.sample.py
 .cache/
 .vscode/
