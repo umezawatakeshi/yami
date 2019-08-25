@@ -2,7 +2,7 @@
 {% import "price_current.html" as price_current %}
 
 {% block h1 %}
-<h1>{% block title %}オークション情報{% endblock %}</h1>
+<h1>{% block title %}{{ auction.itemname }} のオークション情報{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -27,6 +27,7 @@
 <table border="1">
 <tr>
 <th></th>
+<th>入札ID</th>
 <th>価格</th>
 <th>時刻</th>
 <th>入札者</th>
@@ -34,6 +35,7 @@
 {% for bid in bids %}
 <tr class="{{ 'successful-bid-row' if loop.index0 < auction.quantity else 'failed-bid-row' }}">
 <td>{{ '★' if loop.index0 < auction.quantity }}</td>
+<td>{{ bid.bid_id }}</td>
 <td>{{ "{:,d}".format(bid.price) + "円" }}</td>
 <td>{{ bid.datetime_bid_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
 <td>{{ bid.username }}</td>
@@ -41,7 +43,11 @@
 {% endfor %}
 </table>
 {% else %}
+{% if auction.ended %}
+<p>入札はありませんでした。</p>
+{% else %}
 <p>まだ入札はありません。</p>
+{% endif %}
 {% endif %}
 {% if not auction.ended %}
 <form action="{{ url_for('view.bid', auction_id=auction.auction_id) }}" method="post">
@@ -55,7 +61,8 @@
 <td>
 <input type="hidden" name="price_bid_min" value="{{ auction.price_bid_min }}"/>
 <input type="radio" id="bidtype_min" name="bidtype" value="min" checked="checked"/><label for="bidtype_min">最低入札価格（{{ "{:,d}".format(auction.price_bid_min) + "円" }}）で入札</label><br/>
-<input type="radio" id="bidtype_normal" name="bidtype" value="normal"/><label for="bidtype_normal">金額を指定して入札</label> <input type="number" id="price" name="price" value="{{ price_bid_min }}"/>{{ "円" }}<br/>
+<input type="radio" id="bidtype_normal" name="bidtype" value="normal"/><label for="bidtype_normal">金額を指定して入札</label>
+<input type="number" id="price" name="price" value="{{ auction.price_bid_min }}" min="{{ auction.price_bid_min }}" {{ {"max": auction.price_prompt}|xmlattr }} />{{ "円" }}<br/>
 {% if auction.price_prompt != None %}
 <input type="hidden" name="price_prompt" value="{{ auction.price_prompt }}"/>
 <input type="radio" id="bidtype_prompt" name="bidtype" value="prompt"/><label for="bidtype_prompt">即決価格（{{ "{:,d}".format(auction.price_prompt) + "円" }}）で入札</label>
