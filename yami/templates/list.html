@@ -53,6 +53,7 @@
 </table>
 <hr/>
 <p class="navigation-bar">
+全 {{ "{:,d}".format(num_auctions) }} 件<br/>
 {% if page != 1 %}
 <a href="{{ page_url(page=page-1) }}" class="navigation-link">&lt;&lt;前のページ</a>
 {% else %}

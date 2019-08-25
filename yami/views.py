@@ -28,7 +28,7 @@ def auction_list(page, ended):
 		logic.append_localtime(auction)
 	num_pages = (num_auctions + napp - 1) // napp
 
-	return render_template("list.html", current_app=current_app, ended=ended, auctions=auctions, page=page, num_pages=num_pages)
+	return render_template("list.html", current_app=current_app, ended=ended, auctions=auctions, num_auctions=num_auctions, page=page, num_pages=num_pages)
 
 
 @bp.route("/auction/<int:auction_id>")
