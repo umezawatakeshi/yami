@@ -23,3 +23,15 @@
 .disabled-navigation-link {
 	color: gray;
 }
+
+
+#site-admin-notice {
+	margin: 0;
+	text-align: right;
+}
+
+#copyright-notice {
+	margin: 0;
+	text-align: right;
+	font-size: x-small;
+}
