@@ -52,19 +52,25 @@
 {% endfor %}
 </table>
 <hr/>
+<p class="navigation-bar">
 {% if page != 1 %}
-<a href="{{ page_url(page=page-1) }}">&lt;&lt;前のページ</a>
+<a href="{{ page_url(page=page-1) }}" class="navigation-link">&lt;&lt;前のページ</a>
+{% else %}
+<span class="navigation-link, disabled-navigation-link">&lt;&lt;前のページ</span>
 {% endif %}
 {% for p in range(1, num_pages+1) %}
 {% if p != page %}
-<a href="{{ page_url(page=p) }}">[{{ p }}]</a>
+<a href="{{ page_url(page=p) }}" class="navigation-link">[{{ p }}]</a>
 {% else %}
-<b>[{{ p }}]</b>
+<span class="navigation-link, current-nagivation-page">[{{ p }}]</span>
 {% endif %}
 {% endfor %}
 {% if page != num_pages %}
-<a href="{{ page_url(page=page+1) }}">次のページ&gt;&gt;</a>
+<a href="{{ page_url(page=page+1) }}" class="navigation-link">次のページ&gt;&gt;</a>
+{% else %}
+<span class="navigation-link, disabled-navigation-link">次のページ&gt;&gt;</span>
 {% endif %}
+</p>
 {% else %}
 <p>{{ type() }}オークションはありません。</p>
 {% endif %}

@@ -3,4 +3,23 @@
 }
 
 .failed-bid-row td {
+	color: gray;
+}
+
+
+.navigation-bar {
+	text-align: center;
+	margin: 0;
+}
+
+.navigation-link {
+	white-space: nowrap;
+}
+
+.current-nagivation-page {
+	font-weight: bold;
+}
+
+.disabled-navigation-link {
+	color: gray;
 }
