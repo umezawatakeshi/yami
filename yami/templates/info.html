@@ -10,17 +10,17 @@
 <p>このオークションは終了しています。</p>
 {% endif %}
 <table border="1">
-<tr><th>出品ID</th><td>{{ auction.auction_id }}</td></tr>
+<tr><th>出品ID</th><td class="numeric">{{ auction.auction_id }}</td></tr>
 <tr><th>品名</th><td>{{ auction.itemname }}</td></tr>
-<tr><th>数量</th><td>{{ auction.quantity }}</td></tr>
+<tr><th>数量</th><td class="numeric">{{ auction.quantity }}</td></tr>
 <tr><th>出品者</th><td>{{ auction.username }}</td></tr>
 <tr><th>受け渡し場所</th><td>{{ auction.location }}</td></tr>
 <tr><th>出品時刻</th><td>{{ auction.datetime_start_local.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>
 <tr><th>終了時刻</th><td>{{ auction.datetime_end_local.strftime("%Y-%m-%d %H:%M:%S") }}</td></tr>
-<tr><th>現在価格</th><td>{{ price_current.price_current(auction) }}</td></tr>
-<tr><th>即決価格</th><td>{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td></tr>
-<tr><th>開始価格</th><td>{{ "{:,d}".format(auction.price_start) + "円" }}</td></tr>
-<tr><th>入札数</th><td>{{ bids|length }}</td></tr>
+<tr><th>現在価格</th><td class="numeric">{{ price_current.price_current(auction) }}</td></tr>
+<tr><th>即決価格</th><td class="numeric">{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td></tr>
+<tr><th>開始価格</th><td class="numeric">{{ "{:,d}".format(auction.price_start) + "円" }}</td></tr>
+<tr><th>入札数</th><td class="numeric">{{ bids|length }}</td></tr>
 <tr><td colspan="2">{{ auction.description }}</td></tr>
 </table>
 {% if bids %}
@@ -35,8 +35,8 @@
 {% for bid in bids %}
 <tr class="{{ 'successful-bid-row' if loop.index0 < auction.quantity else 'failed-bid-row' }}">
 <td>{{ '★' if loop.index0 < auction.quantity }}</td>
-<td>{{ bid.bid_id }}</td>
-<td>{{ "{:,d}".format(bid.price) + "円" }}</td>
+<td class="numeric">{{ bid.bid_id }}</td>
+<td class="numeric">{{ "{:,d}".format(bid.price) + "円" }}</td>
 <td>{{ bid.datetime_bid_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
 <td>{{ bid.username }}</td>
 </tr>
@@ -62,7 +62,7 @@
 <input type="hidden" name="price_bid_min" value="{{ auction.price_bid_min }}"/>
 <input type="radio" id="bidtype_min" name="bidtype" value="min" checked="checked"/><label for="bidtype_min">最低入札価格（{{ "{:,d}".format(auction.price_bid_min) + "円" }}）で入札</label><br/>
 <input type="radio" id="bidtype_normal" name="bidtype" value="normal"/><label for="bidtype_normal">金額を指定して入札</label>
-<input type="number" id="price" name="price" value="{{ auction.price_bid_min }}" min="{{ auction.price_bid_min }}" {{ {"max": auction.price_prompt}|xmlattr }} />{{ "円" }}<br/>
+<input type="number" id="price" name="price" value="{{ auction.price_bid_min }}" min="{{ auction.price_bid_min }}" {{ {"max": auction.price_prompt}|xmlattr }} class="numeric"/>{{ "円" }}<br/>
 {% if auction.price_prompt != None %}
 <input type="hidden" name="price_prompt" value="{{ auction.price_prompt }}"/>
 <input type="radio" id="bidtype_prompt" name="bidtype" value="prompt"/><label for="bidtype_prompt">即決価格（{{ "{:,d}".format(auction.price_prompt) + "円" }}）で入札</label>

@@ -38,16 +38,16 @@
 </tr>
 {% for auction in auctions %}
 <tr>
-<td>{{ auction.auction_id }}</td>
+<td class="numeric">{{ auction.auction_id }}</td>
 <td><a href="{{ url_for('view.info', auction_id=auction.auction_id) }}">{{ auction.itemname }}</a></td>
-<td>{{ auction.quantity }}</td>
+<td class="numeric">{{ auction.quantity }}</td>
 <td>{{ auction.username }}</td>
 <td>{{ auction.datetime_start_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
 <td>{{ auction.datetime_end_local.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-<td>{{ price_current.price_current(auction) }}</td>
-<td>{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td>
-<td>{{ "{:,d}".format(auction.price_start) + "円" }}</td>
-<td>{{ auction.num_bids }}</td>
+<td class="numeric">{{ price_current.price_current(auction) }}</td>
+<td class="numeric">{{ "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-" }}</td>
+<td class="numeric">{{ "{:,d}".format(auction.price_start) + "円" }}</td>
+<td class="numeric">{{ auction.num_bids }}</td>
 </tr>
 {% endfor %}
 </table>

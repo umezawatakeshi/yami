@@ -1,3 +1,8 @@
+.numeric {
+	text-align: right;
+}
+
+
 .successful-bid-row td {
 	font-weight: bold;
 }
