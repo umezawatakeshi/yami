@@ -290,3 +290,46 @@ def test_bid_auction_manytimes(initdb):
 		"price": 1000,
 		"datetime_bid": datetime_bid + timedelta(days=1),
 	}]
+
+
+def test_bid_auction_extension(initdb):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+	yami_auto_extension = 3600
+
+	app = create_app({
+		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
+		"YAMI_PRICE_STEP_MIN": 111,
+		"YAMI_PRICE_STEP_FROM_CURRENT_PRICE": True,
+		"YAMI_PRICE_STEP_RULE": {
+			1: 1,
+		},
+		"YAMI_AUTO_EXTENSION": yami_auto_extension,
+	})
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		auction_id = logic.new_auction({
+			"itemname": "foo",
+			"quantity": 1,
+			"username": "bar",
+			"datetime_end": datetime_end,
+			"price_start": 456,
+			"price_prompt": None,
+			"price_step_min": 111,
+			"location": "anyware",
+			"description": "something",
+		})
+		logic.commit()
+
+	with app.app_context():
+		g.datetime_now = datetime_end - timedelta(minutes=30)
+		logic.bid_auction({
+			"auction_id": auction_id,
+			"username": "hoge",
+			"price": 1000,
+		})
+		auction, _ = logic.get_auction_info(auction_id, for_update=False)
+		logic.commit()
+
+	assert auction["datetime_end"] == datetime_end - timedelta(minutes=30) + timedelta(seconds=yami_auto_extension)
