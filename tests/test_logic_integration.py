@@ -66,6 +66,7 @@ def test_new_auction(initdb):
 		"location": "anyware",
 		"description": "something",
 		"ended": False,
+		"endtype": 0,
 		"price_bid_min": 456,
 		"price_current_high": None,
 		"price_current_low": None,
