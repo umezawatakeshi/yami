@@ -4,6 +4,8 @@ import tzlocal
 from datetime import datetime, timedelta, timezone
 import decimal
 from decimal import Decimal
+import hashlib
+import base64
 
 
 def get_auction_list(limit, offset, ended):
@@ -128,6 +130,19 @@ def bid_auction(newbid):
 		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
 
 	return BID_OK
+
+
+default_password_hash_iterations = 36000
+default_password_hash_digest = "sha256"
+
+def encode_password(password, salt, iterations=None):
+	if iterations is None:
+		iterations = default_password_hash_iterations
+	password_bytes = password.encode("ascii")
+	salt_bytes = salt.encode("ascii")
+	hash = hashlib.pbkdf2_hmac(default_password_hash_digest, password_bytes, salt_bytes, iterations)
+	hash = base64.b64encode(hash).decode("ascii").strip()
+	return "pbkdf2_%s$%d$%s$%s" % (default_password_hash_digest, iterations, salt, hash)
 
 
 def new_auction(auction):
