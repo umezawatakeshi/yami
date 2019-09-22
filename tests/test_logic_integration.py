@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from flask import g
 import testdb
 from testdb import initdb
+from unittest import mock
+import secrets
 
 
 def test_get_auction_info_notfound(initdb):
@@ -24,9 +26,13 @@ def test_get_auction_info_notfound(initdb):
 	assert num_auctions == 0
 
 
-def test_new_auction(initdb):
+def test_new_auction(initdb, monkeypatch):
 	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+
+	secret_token_hex_mock = mock.MagicMock()
+	secret_token_hex_mock.return_value = "0123456789abcdef"
+	monkeypatch.setattr(secrets, "token_hex", secret_token_hex_mock)
 
 	app = create_app({
 		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
@@ -34,7 +40,7 @@ def test_new_auction(initdb):
 
 	with app.app_context():
 		g.datetime_now = datetime_now
-		auction_id = logic.new_auction({
+		auction_id, password = logic.new_auction({
 			"itemname": "foo",
 			"quantity": 123,
 			"username": "bar",
@@ -75,6 +81,7 @@ def test_new_auction(initdb):
 	expected_auction_in_list["num_bids"] = 0
 
 	assert auction_id == 1
+	assert password == "0123456789abcdef"
 
 	assert auction == expected_auction
 	assert len(bids) == 0
@@ -126,7 +133,7 @@ def test_bid_auction_error(initdb):
 
 	with app.app_context():
 		g.datetime_now = datetime_now
-		auction_id = logic.new_auction({
+		auction_id, _ = logic.new_auction({
 			"itemname": "foo",
 			"quantity": 123,
 			"username": "bar",
@@ -178,7 +185,7 @@ def test_bid_auction_prompt(initdb):
 
 	with app.app_context():
 		g.datetime_now = datetime_now
-		auction_id = logic.new_auction({
+		auction_id, _ = logic.new_auction({
 			"itemname": "foo",
 			"quantity": 1,
 			"username": "bar",
@@ -242,7 +249,7 @@ def test_bid_auction_manytimes(initdb):
 
 	with app.app_context():
 		g.datetime_now = datetime_now
-		auction_id = logic.new_auction({
+		auction_id, _ = logic.new_auction({
 			"itemname": "foo",
 			"quantity": 1,
 			"username": "bar",
@@ -310,7 +317,7 @@ def test_bid_auction_extension(initdb):
 
 	with app.app_context():
 		g.datetime_now = datetime_now
-		auction_id = logic.new_auction({
+		auction_id, _ = logic.new_auction({
 			"itemname": "foo",
 			"quantity": 1,
 			"username": "bar",

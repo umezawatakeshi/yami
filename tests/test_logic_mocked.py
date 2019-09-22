@@ -4,6 +4,7 @@ from unittest import mock
 from yami import create_app, logic
 from flask import g
 from datetime import datetime, timedelta, timezone
+import secrets
 
 
 def create_cursor_mock():
@@ -14,7 +15,7 @@ def create_cursor_mock():
 	return m
 
 
-def test_new_auction():
+def test_new_auction(monkeypatch):
 	app = create_app({
 	})
 	auction = {
@@ -33,10 +34,18 @@ def test_new_auction():
 	db_mock = mock.MagicMock()
 	db_mock.cursor.side_effect = [cursor_mock]
 
+	secret_token_hex_mock = mock.MagicMock()
+	secret_token_hex_mock.return_value = "0123456789abcdef"
+	monkeypatch.setattr(secrets, "token_hex", secret_token_hex_mock)
+
+	secret_token_urlsafe_mock = mock.MagicMock()
+	secret_token_urlsafe_mock.return_value = "AZaz09_-"
+	monkeypatch.setattr(secrets, "token_urlsafe", secret_token_urlsafe_mock)
+
 	with app.app_context():
 		g.datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 		g.db = db_mock
-		auction_id = logic.new_auction(auction)
+		auction_id, password = logic.new_auction(auction)
 
 	assert db_mock.cursor.mock_calls == [
 		mock.call(),
@@ -49,6 +58,9 @@ def test_new_auction():
 			456,789,111, "anyware", "something")),
 		mock.call.execute("SELECT LAST_INSERT_ID() FROM t_auction"),
 		mock.call.fetchone(),
+		mock.call.execute(
+			"INSERT INTO t_auction_password (auction_id, password) VALUES (%s, %s)",
+			(42, "pbkdf2_sha256$36000$AZaz09_-$A/eop0d997YvWCSWHt9JxKihD3A0EZiXdjXdL9VRvwU=")),
 		mock.call.close(),
 	]
 	assert cursor_mock.execute.mock_calls[0][1][1][3].tzinfo == timezone.utc
@@ -56,6 +68,7 @@ def test_new_auction():
 	assert cursor_mock.execute.mock_calls[0][1][1][5].tzinfo == timezone.utc
 
 	assert auction_id == 42
+	assert password == "0123456789abcdef"
 
 
 def test_get_auction_list_held():

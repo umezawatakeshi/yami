@@ -146,8 +146,8 @@ def new():
 	if auction["description"] is None:
 		auction["description"] = ""
 
-	auction_id = logic.new_auction(auction)
+	auction_id, password = logic.new_auction(auction)
 
 	logic.commit()
 
-	return render_template("new.html", current_app=current_app, auction_id=auction_id, succeeded=True)
+	return render_template("new.html", current_app=current_app, auction_id=auction_id, password=password, succeeded=True)

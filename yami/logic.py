@@ -6,6 +6,7 @@ import decimal
 from decimal import Decimal
 import hashlib
 import base64
+import secrets
 
 
 def get_auction_list(limit, offset, ended):
@@ -146,13 +147,19 @@ def encode_password(password, salt, iterations=None):
 
 
 def new_auction(auction):
+	password = secrets.token_hex(8)
+	salt = secrets.token_urlsafe(8)
+	encoded_password = encode_password(password, salt)
+
 	with db.get_cursor() as cur:
 		cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_step_min, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
 			(auction["itemname"], auction["quantity"], auction["username"], g.datetime_now, auction["datetime_end"], g.datetime_now, auction["price_start"], auction["price_prompt"], auction["price_step_min"], auction["location"], auction["description"]))
 		cur.execute("SELECT LAST_INSERT_ID() FROM t_auction")
 		auction_id = cur.fetchone()[0]
+		cur.execute("INSERT INTO t_auction_password (auction_id, password) VALUES (%s, %s)",
+			(auction_id, encoded_password))
 
-	return auction_id
+	return (auction_id, password)
 
 
 def check_expiration():
