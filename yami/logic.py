@@ -162,6 +162,14 @@ def check_password(password, encoded_password):
 	return hash == encoded_fields[3]
 
 
+def check_auction_admin(password, saved_password):
+	if check_password(password, saved_password):
+		return (True, False)
+	if "YAMI_ADMIN_PASSWORD" in current_app.config and check_password(password, current_app.config["YAMI_ADMIN_PASSWORD"]):
+		return (True, True)
+	return (False, False)
+
+
 def new_auction(auction):
 	password = secrets.token_hex(8)
 	salt = secrets.token_urlsafe(8)

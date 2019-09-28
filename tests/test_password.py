@@ -1,5 +1,5 @@
 import pytest
-from yami import logic
+from yami import create_app, logic
 
 
 @pytest.mark.parametrize("password, salt, iterations, result", [
@@ -23,3 +23,23 @@ def test_encode_password(password, salt, iterations, result):
 ])
 def test_check_password(password, encoded_password, result):
 	assert logic.check_password(password, encoded_password) == result
+
+
+@pytest.mark.parametrize("password, encoded_password, admin_password, result", [
+	("password",    "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=", None, (True,  False)),
+	("passwor",     "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=", None, (False, False)),
+	("password",    "pbkdf2_sha256$100001$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=",
+	                "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=",       (True,  True)),
+	("password",    "pbkdf2_sha256$100001$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=",
+	                "pbkdf2_sha256$100002$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=",       (False, False)),
+	("password",    "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=",
+	                "pbkdf2_sha256$100002$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=",       (True,  False)),
+])
+def test_check_auction_admin(password, encoded_password, admin_password, result):
+	if admin_password is None:
+		app = create_app({})
+	else:
+		app = create_app({"YAMI_ADMIN_PASSWORD": admin_password})
+
+	with app.app_context():
+		assert logic.check_auction_admin(password, encoded_password) == result
