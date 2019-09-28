@@ -7,7 +7,15 @@
 
 {% block content %}
 {% if auction.ended %}
+{% if auction.endtype == 0 %}
 <p>このオークションは終了しています。</p>
+{% elif auction.endtype == 1 %}
+<p>このオークションは出品者によって取り消されています。</p>
+{% elif auction.endtype == 2 %}
+<p>このオークションは管理者によって取り消されています。</p>
+{% else %}
+<p>このオークションは不明な理由により終了しています。</p>
+{% endif %}
 {% endif %}
 <table border="1">
 <tr><th>出品ID</th><td class="numeric">{{ auction.auction_id }}</td></tr>
@@ -70,6 +78,20 @@
 </td></tr>
 <tr><td colspan="2"><button type="submit">入札</button></td>
 </tr>
+</table>
+</form>
+<form action="{{ url_for('view.admin', auction_id=auction.auction_id) }}" method="post">
+<table border="1">
+<tr>
+<th>出品管理パスワード <small>必須</small></th>
+<td><input type="password" id="password" name="password"/></td>
+</tr>
+<tr>
+<td colspan="2">
+<input type="radio" id="admin_action_cancel" name="admin_action" value="cancel"/> 出品の取り消し
+</td>
+</tr>
+<tr><td colspan="2"><button type="submit">実行</button></td>
 </table>
 </form>
 {% endif %}

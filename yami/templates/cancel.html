@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block head %}
+<meta http-equiv="Refresh" content="30; url={{ url_for('view.info', auction_id=auction_id) }}"/>
+{% endblock %}
+
+{% block h1 %}
+<h1>{% block title %}出品の取り消し{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% if succeeded %}
+<p>出品ID {{ auction_id }} の出品を取り消しました。</p>
+{% else %}
+<p>出品の取り消しに失敗しました。</p>
+{% if errcode == 2 %}
+<p>パスワードが間違っています。</p>
+{% else %}
+<p>不明なエラーです。（エラーコード {{ errcode }}）</p>
+{% endif %}
+{% endif %}
+<p>30秒後に自動的にオークション情報ページに遷移します。</p>
+{% endblock %}
