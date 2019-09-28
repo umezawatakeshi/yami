@@ -341,3 +341,114 @@ def test_bid_auction_extension(initdb):
 		logic.commit()
 
 	assert auction["datetime_end"] == datetime_end - timedelta(minutes=30) + timedelta(seconds=yami_auto_extension)
+
+
+def test_cancel_auction_notfound(initdb):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+
+	app = create_app({
+		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
+	})
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		result = logic.cancel_auction(42, "")
+		logic.commit()
+
+	assert result == logic.CANCEL_ERROR_NOT_FOUND
+
+
+def test_cancel_auction_badpassword(initdb):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+
+	app = create_app({
+		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
+	})
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		auction_id, _ = logic.new_auction({
+			"itemname": "foo",
+			"quantity": 1,
+			"username": "bar",
+			"datetime_end": datetime_end,
+			"price_start": 456,
+			"price_prompt": None,
+			"price_step_min": 111,
+			"location": "anyware",
+			"description": "something",
+		})
+
+		g.datetime_now = datetime_now + timedelta(minutes=30)
+		result = logic.cancel_auction(auction_id, "")
+
+	assert result == logic.CANCEL_ERROR_BAD_PASSWORD
+
+
+def test_cancel_auction_seller(initdb):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+
+	app = create_app({
+		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
+	})
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		auction_id, password = logic.new_auction({
+			"itemname": "foo",
+			"quantity": 1,
+			"username": "bar",
+			"datetime_end": datetime_end,
+			"price_start": 456,
+			"price_prompt": None,
+			"price_step_min": 111,
+			"location": "anyware",
+			"description": "something",
+		})
+
+		g.datetime_now = datetime_now + timedelta(minutes=30)
+		result = logic.cancel_auction(auction_id, password)
+		auction, _ = logic.get_auction_info(auction_id, for_update=False)
+		logic.commit()
+
+	assert result == logic.CANCEL_OK
+	assert auction["ended"] == 1
+	assert auction["endtype"] == logic.ENDTYPE_CANCELED_BY_SELLER
+	assert auction["datetime_update"] == datetime_now + timedelta(minutes=30)
+
+
+def test_cancel_auction_admin(initdb):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+
+	app = create_app({
+		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
+		"YAMI_ADMIN_PASSWORD": "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU="
+	})
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		auction_id, _ = logic.new_auction({
+			"itemname": "foo",
+			"quantity": 1,
+			"username": "bar",
+			"datetime_end": datetime_end,
+			"price_start": 456,
+			"price_prompt": None,
+			"price_step_min": 111,
+			"location": "anyware",
+			"description": "something",
+		})
+
+		g.datetime_now = datetime_now + timedelta(minutes=30)
+		result = logic.cancel_auction(auction_id, "password")
+		auction, _ = logic.get_auction_info(auction_id, for_update=False)
+		logic.commit()
+
+	assert result == logic.CANCEL_OK
+	assert auction["ended"] == 1
+	assert auction["endtype"] == logic.ENDTYPE_CANCELED_BY_ADMIN
+	assert auction["datetime_update"] == datetime_now + timedelta(minutes=30)

@@ -186,6 +186,33 @@ def new_auction(auction):
 	return (auction_id, password)
 
 
+CANCEL_OK = 0
+CANCEL_ERROR_NOT_FOUND = 1
+CANCEL_ERROR_BAD_PASSWORD = 2
+
+ENDTYPE_NORMAL = 0
+ENDTYPE_CANCELED_BY_SELLER = 1
+ENDTYPE_CANCELED_BY_ADMIN = 2
+
+def cancel_auction(auction_id, password):
+	with db.get_cursor() as cur:
+		cur.execute("SELECT password FROM t_auction_password WHERE auction_id = %s", (auction_id,))
+		row = cur.fetchone()
+	if row is None:
+		return CANCEL_ERROR_NOT_FOUND
+	encoded_password = row[0]
+
+	checked, isadmin = check_auction_admin(password, encoded_password)
+	if not checked:
+		return CANCEL_ERROR_BAD_PASSWORD
+
+	with db.get_cursor() as cur:
+		cur.execute("UPDATE t_auction SET ended = 1, endtype = %s, datetime_update = %s WHERE auction_id = %s",
+			(ENDTYPE_CANCELED_BY_ADMIN if isadmin else ENDTYPE_CANCELED_BY_SELLER, g.datetime_now, auction_id))
+
+	return CANCEL_OK
+
+
 def check_expiration():
 	with db.get_dict_cursor() as cur:
 		cur.execute("SELECT * FROM t_auction WHERE ended = false AND datetime_end <= %s FOR UPDATE", (g.datetime_now,))
