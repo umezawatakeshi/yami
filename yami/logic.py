@@ -146,6 +146,22 @@ def encode_password(password, salt, iterations=None):
 	return "pbkdf2_%s$%d$%s$%s" % (default_password_hash_digest, iterations, salt, hash)
 
 
+def check_password(password, encoded_password):
+	# Currently, algorithm changing is not supported.
+	# 今のところアルゴリズムの変更には対応していない
+	encoded_fields = encoded_password.split("$")
+	if len(encoded_fields) != 4:
+		return False
+	if encoded_fields[0] != "pbkdf2_sha256":
+		return False
+	password_bytes = password.encode("ascii")
+	iterations = int(encoded_fields[1])
+	salt_bytes = encoded_fields[2].encode("ascii")
+	hash = hashlib.pbkdf2_hmac(default_password_hash_digest, password_bytes, salt_bytes, iterations)
+	hash = base64.b64encode(hash).decode("ascii").strip()
+	return hash == encoded_fields[3]
+
+
 def new_auction(auction):
 	password = secrets.token_hex(8)
 	salt = secrets.token_urlsafe(8)
