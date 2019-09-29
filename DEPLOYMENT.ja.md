@@ -43,7 +43,11 @@ mysql> GRANT ALL ON test_yami.* TO yami;
 
 ### アップグレードの場合
 
-TBD
+DB サーバで
+
+```
+root# mysql db_yami < upgrade.mysql
+```
 
 ## 起動
 
