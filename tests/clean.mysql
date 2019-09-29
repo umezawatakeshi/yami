@@ -1,3 +1,4 @@
 DROP TABLE IF EXISTS t_bid;
+DROP TABLE IF EXISTS t_auction_password;
 DROP TABLE IF EXISTS t_auction;
 DROP TABLE IF EXISTS t_schemaver;

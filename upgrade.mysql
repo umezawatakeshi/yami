@@ -1,0 +1,22 @@
+DROP PROCEDURE IF EXISTS tmp_upgrade;
+
+delimiter //
+CREATE PROCEDURE tmp_upgrade()
+BEGIN
+    IF (SELECT version FROM t_schemaver WHERE plugin = "") = 1 THEN
+        CREATE TABLE t_auction_password (
+            auction_id      INT                          NOT NULL,
+            password        CHAR(80) CHARACTER SET ascii NOT NULL,
+            PRIMARY KEY (auction_id)
+        ) ENGINE=InnoDB;
+        ALTER TABLE t_auction ADD COLUMN
+            endtype         TINYINT                      NOT NULL DEFAULT 0
+            AFTER ended;
+        UPDATE t_schemaver SET version = 2 WHERE plugin = "";
+    END IF;
+END//
+delimiter ;
+
+CALL tmp_upgrade();
+
+DROP PROCEDURE tmp_upgrade;

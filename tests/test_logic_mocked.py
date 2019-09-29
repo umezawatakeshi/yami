@@ -4,6 +4,7 @@ from unittest import mock
 from yami import create_app, logic
 from flask import g
 from datetime import datetime, timedelta, timezone
+import secrets
 
 
 def create_cursor_mock():
@@ -14,7 +15,7 @@ def create_cursor_mock():
 	return m
 
 
-def test_new_auction():
+def test_new_auction(monkeypatch):
 	app = create_app({
 	})
 	auction = {
@@ -33,10 +34,18 @@ def test_new_auction():
 	db_mock = mock.MagicMock()
 	db_mock.cursor.side_effect = [cursor_mock]
 
+	secret_token_hex_mock = mock.MagicMock()
+	secret_token_hex_mock.return_value = "0123456789abcdef"
+	monkeypatch.setattr(secrets, "token_hex", secret_token_hex_mock)
+
+	secret_token_urlsafe_mock = mock.MagicMock()
+	secret_token_urlsafe_mock.return_value = "AZaz09_-"
+	monkeypatch.setattr(secrets, "token_urlsafe", secret_token_urlsafe_mock)
+
 	with app.app_context():
 		g.datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 		g.db = db_mock
-		auction_id = logic.new_auction(auction)
+		auction_id, password = logic.new_auction(auction)
 
 	assert db_mock.cursor.mock_calls == [
 		mock.call(),
@@ -49,6 +58,9 @@ def test_new_auction():
 			456,789,111, "anyware", "something")),
 		mock.call.execute("SELECT LAST_INSERT_ID() FROM t_auction"),
 		mock.call.fetchone(),
+		mock.call.execute(
+			"INSERT INTO t_auction_password (auction_id, password) VALUES (%s, %s)",
+			(42, "pbkdf2_sha256$36000$AZaz09_-$A/eop0d997YvWCSWHt9JxKihD3A0EZiXdjXdL9VRvwU=")),
 		mock.call.close(),
 	]
 	assert cursor_mock.execute.mock_calls[0][1][1][3].tzinfo == timezone.utc
@@ -56,6 +68,7 @@ def test_new_auction():
 	assert cursor_mock.execute.mock_calls[0][1][1][5].tzinfo == timezone.utc
 
 	assert auction_id == 42
+	assert password == "0123456789abcdef"
 
 
 def test_get_auction_list_held():
@@ -966,4 +979,109 @@ def test_check_expiration(monkeypatch):
 			"bid_id": 2,
 			"price": 80
 		}], True, True),
+	]
+
+
+def test_cancel_auction_notfound():
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	#datetime_now_naive = datetime_now.replace(tzinfo=None)
+
+	app = create_app({
+	})
+
+	cursor_mock1 = create_cursor_mock()
+	cursor_mock1.fetchone.return_value = None
+	cursor_mock2 = create_cursor_mock()
+	db_mock = mock.MagicMock()
+	db_mock.cursor.side_effect = [cursor_mock1, cursor_mock2]
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		g.db = db_mock
+		result = logic.cancel_auction(42, "password")
+
+	assert result == logic.CANCEL_ERROR_NOT_FOUND
+
+	assert db_mock.cursor.mock_calls == [
+		mock.call(),
+	]
+
+	assert cursor_mock1.mock_calls == [
+		mock.call.execute("SELECT password FROM t_auction_password WHERE auction_id = %s", (42,)),
+		mock.call.fetchone(),
+		mock.call.close(),
+	]
+
+
+def test_cancel_auction_badpassword():
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	#datetime_now_naive = datetime_now.replace(tzinfo=None)
+
+	app = create_app({
+	})
+
+	cursor_mock1 = create_cursor_mock()
+	cursor_mock1.fetchone.return_value = [""]
+	cursor_mock2 = create_cursor_mock()
+	db_mock = mock.MagicMock()
+	db_mock.cursor.side_effect = [cursor_mock1, cursor_mock2]
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		g.db = db_mock
+		result = logic.cancel_auction(42, "password")
+
+	assert result == logic.CANCEL_ERROR_BAD_PASSWORD
+
+	assert db_mock.cursor.mock_calls == [
+		mock.call(),
+	]
+
+	assert cursor_mock1.mock_calls == [
+		mock.call.execute("SELECT password FROM t_auction_password WHERE auction_id = %s", (42,)),
+		mock.call.fetchone(),
+		mock.call.close(),
+	]
+
+
+@pytest.mark.parametrize("isadmin", [
+	(False),
+	(True ),
+])
+def test_cancel_auction_ok(isadmin):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	#datetime_now_naive = datetime_now.replace(tzinfo=None)
+
+	app = create_app({
+		"YAMI_ADMIN_PASSWORD": "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=" if isadmin else ""
+	})
+
+	cursor_mock1 = create_cursor_mock()
+	cursor_mock1.fetchone.return_value = ["pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=" if not isadmin else ""]
+	cursor_mock2 = create_cursor_mock()
+	db_mock = mock.MagicMock()
+	db_mock.cursor.side_effect = [cursor_mock1, cursor_mock2]
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		g.db = db_mock
+		result = logic.cancel_auction(42, "password")
+
+	assert result == logic.CANCEL_OK
+
+	assert db_mock.cursor.mock_calls == [
+		mock.call(),
+		mock.call(),
+	]
+
+	assert cursor_mock1.mock_calls == [
+		mock.call.execute("SELECT password FROM t_auction_password WHERE auction_id = %s", (42,)),
+		mock.call.fetchone(),
+		mock.call.close(),
+	]
+
+	assert cursor_mock2.mock_calls == [
+		mock.call.execute("UPDATE t_auction SET ended = 1, endtype = %s, datetime_update = %s WHERE auction_id = %s",
+			(2 if isadmin else 1, datetime_now, 42)),
+		mock.call.close(),
 	]

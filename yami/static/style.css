@@ -40,3 +40,8 @@
 	text-align: right;
 	font-size: x-small;
 }
+
+
+.password {
+	font-family: 'Courier New', Courier, monospace;
+}

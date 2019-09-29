@@ -4,6 +4,9 @@ import tzlocal
 from datetime import datetime, timedelta, timezone
 import decimal
 from decimal import Decimal
+import hashlib
+import base64
+import secrets
 
 
 def get_auction_list(limit, offset, ended):
@@ -130,14 +133,84 @@ def bid_auction(newbid):
 	return BID_OK
 
 
+default_password_hash_iterations = 36000
+default_password_hash_digest = "sha256"
+
+def encode_password(password, salt, iterations=None):
+	if iterations is None:
+		iterations = default_password_hash_iterations
+	password_bytes = password.encode("ascii")
+	salt_bytes = salt.encode("ascii")
+	hash = hashlib.pbkdf2_hmac(default_password_hash_digest, password_bytes, salt_bytes, iterations)
+	hash = base64.b64encode(hash).decode("ascii").strip()
+	return "pbkdf2_%s$%d$%s$%s" % (default_password_hash_digest, iterations, salt, hash)
+
+
+def check_password(password, encoded_password):
+	# Currently, algorithm changing is not supported.
+	# 今のところアルゴリズムの変更には対応していない
+	encoded_fields = encoded_password.split("$")
+	if len(encoded_fields) != 4:
+		return False
+	if encoded_fields[0] != "pbkdf2_sha256":
+		return False
+	password_bytes = password.encode("ascii")
+	iterations = int(encoded_fields[1])
+	salt_bytes = encoded_fields[2].encode("ascii")
+	hash = hashlib.pbkdf2_hmac(default_password_hash_digest, password_bytes, salt_bytes, iterations)
+	hash = base64.b64encode(hash).decode("ascii").strip()
+	return hash == encoded_fields[3]
+
+
+def check_auction_admin(password, saved_password):
+	if check_password(password, saved_password):
+		return (True, False)
+	if "YAMI_ADMIN_PASSWORD" in current_app.config and check_password(password, current_app.config["YAMI_ADMIN_PASSWORD"]):
+		return (True, True)
+	return (False, False)
+
+
 def new_auction(auction):
+	password = secrets.token_hex(8)
+	salt = secrets.token_urlsafe(8)
+	encoded_password = encode_password(password, salt)
+
 	with db.get_cursor() as cur:
 		cur.execute("INSERT INTO t_auction (type, itemname, quantity, username, datetime_start, datetime_end, datetime_update, price_start, price_prompt, price_step_min, location, description) VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
 			(auction["itemname"], auction["quantity"], auction["username"], g.datetime_now, auction["datetime_end"], g.datetime_now, auction["price_start"], auction["price_prompt"], auction["price_step_min"], auction["location"], auction["description"]))
 		cur.execute("SELECT LAST_INSERT_ID() FROM t_auction")
 		auction_id = cur.fetchone()[0]
+		cur.execute("INSERT INTO t_auction_password (auction_id, password) VALUES (%s, %s)",
+			(auction_id, encoded_password))
 
-	return auction_id
+	return (auction_id, password)
+
+
+CANCEL_OK = 0
+CANCEL_ERROR_NOT_FOUND = 1
+CANCEL_ERROR_BAD_PASSWORD = 2
+
+ENDTYPE_NORMAL = 0
+ENDTYPE_CANCELED_BY_SELLER = 1
+ENDTYPE_CANCELED_BY_ADMIN = 2
+
+def cancel_auction(auction_id, password):
+	with db.get_cursor() as cur:
+		cur.execute("SELECT password FROM t_auction_password WHERE auction_id = %s", (auction_id,))
+		row = cur.fetchone()
+	if row is None:
+		return CANCEL_ERROR_NOT_FOUND
+	encoded_password = row[0]
+
+	checked, isadmin = check_auction_admin(password, encoded_password)
+	if not checked:
+		return CANCEL_ERROR_BAD_PASSWORD
+
+	with db.get_cursor() as cur:
+		cur.execute("UPDATE t_auction SET ended = 1, endtype = %s, datetime_update = %s WHERE auction_id = %s",
+			(ENDTYPE_CANCELED_BY_ADMIN if isadmin else ENDTYPE_CANCELED_BY_SELLER, g.datetime_now, auction_id))
+
+	return CANCEL_OK
 
 
 def check_expiration():

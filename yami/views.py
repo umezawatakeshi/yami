@@ -146,8 +146,30 @@ def new():
 	if auction["description"] is None:
 		auction["description"] = ""
 
-	auction_id = logic.new_auction(auction)
+	auction_id, password = logic.new_auction(auction)
 
 	logic.commit()
 
-	return render_template("new.html", current_app=current_app, auction_id=auction_id, succeeded=True)
+	return render_template("new.html", current_app=current_app, auction_id=auction_id, password=password, succeeded=True)
+
+
+@bp.route("/auction/<int:auction_id>/admin", methods=["POST"])
+def admin(auction_id):
+	admin_action = request.form.get("admin_action")
+	password = request.form.get("password")
+
+	if admin_action is None:
+		abort(400)
+	if password is None:
+		abort(400)
+	password = password.strip()
+
+	if admin_action == "cancel":
+		result = logic.cancel_auction(auction_id, password)
+		logic.commit()
+		if result == logic.CANCEL_ERROR_NOT_FOUND:
+			abort(404)
+		else:
+			return render_template("cancel.html", current_app=current_app, auction_id=auction_id, succeeded=(result == logic.CANCEL_OK), errcode=result)
+
+	abort(400)
