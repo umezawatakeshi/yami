@@ -88,21 +88,22 @@ def get_auction_info(auction_id, for_update):
 	return auction, bids
 
 
-BID_OK = 0
-BID_ERROR_NOT_FOUND = 1
-BID_ERROR_ALREADY_ENDED = 2
-BID_ERROR_ANOTHER_ONE_BIDDED_FIRST = 3
+class BidErrorCodes:
+	BID_OK = 0
+	BID_ERROR_NOT_FOUND = 1
+	BID_ERROR_ALREADY_ENDED = 2
+	BID_ERROR_ANOTHER_ONE_BIDDED_FIRST = 3
 
 def bid_auction(newbid):
 	auction, bids = get_auction_info(newbid["auction_id"], for_update=True)
 	if auction is None:
-		return BID_ERROR_NOT_FOUND
+		return BidErrorCodes.BID_ERROR_NOT_FOUND
 
 	if auction["ended"]:
-		return BID_ERROR_ALREADY_ENDED
+		return BidErrorCodes.BID_ERROR_ALREADY_ENDED
 
 	if newbid["price"] < auction["price_bid_min"]:
-		return BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
+		return BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
 
 	if auction["price_prompt"] is not None and newbid["price"] >= auction["price_prompt"]:
 		newbid["price"] = auction["price_prompt"]
@@ -130,7 +131,7 @@ def bid_auction(newbid):
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
 
-	return BID_OK
+	return BidErrorCodes.BID_OK
 
 
 default_password_hash_iterations = 36000
@@ -186,31 +187,33 @@ def new_auction(auction):
 	return (auction_id, password)
 
 
-CANCEL_OK = 0
-CANCEL_ERROR_NOT_FOUND = 1
-CANCEL_ERROR_BAD_PASSWORD = 2
+class CancelErrorCodes:
+	CANCEL_OK = 0
+	CANCEL_ERROR_NOT_FOUND = 1
+	CANCEL_ERROR_BAD_PASSWORD = 2
 
-ENDTYPE_NORMAL = 0
-ENDTYPE_CANCELED_BY_SELLER = 1
-ENDTYPE_CANCELED_BY_ADMIN = 2
+class EndType:
+	ENDTYPE_NORMAL = 0
+	ENDTYPE_CANCELED_BY_SELLER = 1
+	ENDTYPE_CANCELED_BY_ADMIN = 2
 
 def cancel_auction(auction_id, password):
 	with db.get_cursor() as cur:
 		cur.execute("SELECT password FROM t_auction_password WHERE auction_id = %s", (auction_id,))
 		row = cur.fetchone()
 	if row is None:
-		return CANCEL_ERROR_NOT_FOUND
+		return CancelErrorCodes.CANCEL_ERROR_NOT_FOUND
 	encoded_password = row[0]
 
 	checked, isadmin = check_auction_admin(password, encoded_password)
 	if not checked:
-		return CANCEL_ERROR_BAD_PASSWORD
+		return CancelErrorCodes.CANCEL_ERROR_BAD_PASSWORD
 
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET ended = 1, endtype = %s, datetime_update = %s WHERE auction_id = %s",
-			(ENDTYPE_CANCELED_BY_ADMIN if isadmin else ENDTYPE_CANCELED_BY_SELLER, g.datetime_now, auction_id))
+			(EndType.ENDTYPE_CANCELED_BY_ADMIN if isadmin else EndType.ENDTYPE_CANCELED_BY_SELLER, g.datetime_now, auction_id))
 
-	return CANCEL_OK
+	return CancelErrorCodes.CANCEL_OK
 
 
 def check_expiration():

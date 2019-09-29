@@ -75,13 +75,13 @@ def bid(auction_id):
 
 	logic.commit()
 
-	if ret == logic.BID_OK:
+	if ret == logic.BidErrorCodes.BID_OK:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=True, price=price)
-	elif ret == logic.BID_ERROR_NOT_FOUND:
+	elif ret == logic.BidErrorCodes.BID_ERROR_NOT_FOUND:
 		abort(404)
-	elif ret == logic.BID_ERROR_ALREADY_ENDED:
+	elif ret == logic.BidErrorCodes.BID_ERROR_ALREADY_ENDED:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="オークションはすでに終了しています。") # TODO i18n
-	elif ret == logic.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST:
+	elif ret == logic.BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="他の人が先に入札しました。") # TODO i18n
 	else:
 		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="不明なアプリケーションエラーが発生しました。" + ret) # TODO i18n
@@ -167,9 +167,9 @@ def admin(auction_id):
 	if admin_action == "cancel":
 		result = logic.cancel_auction(auction_id, password)
 		logic.commit()
-		if result == logic.CANCEL_ERROR_NOT_FOUND:
+		if result == logic.CancelErrorCodes.CANCEL_ERROR_NOT_FOUND:
 			abort(404)
 		else:
-			return render_template("cancel.html", current_app=current_app, auction_id=auction_id, succeeded=(result == logic.CANCEL_OK), errcode=result)
+			return render_template("cancel.html", current_app=current_app, auction_id=auction_id, succeeded=(result == logic.CancelErrorCodes.CANCEL_OK), errcode=result)
 
 	abort(400)
