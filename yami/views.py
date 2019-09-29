@@ -43,11 +43,15 @@ def info(auction_id):
 	for bid in bids:
 		logic.append_localtime(bid)
 
-	return render_template("info.html", current_app=current_app, auction=auction, bids=bids)
+	return render_template("info.html", current_app=current_app, auction=auction, bids=bids, EndType=logic.EndType)
 
 
 @bp.route("/auction/<int:auction_id>/bid", methods=["POST"])
 def bid(auction_id):
+	class BidErrorCodes(logic.BidErrorCodes):
+		BID_ERROR_NO_USERNAME = 10001
+		BID_ERROR_NO_PRICE = 10002
+
 	username = request.form.get("username")
 	bidtype = request.form.get("bidtype")
 	price = request.form.get("price", type=int)
@@ -55,11 +59,11 @@ def bid(auction_id):
 	price_prompt_sent = request.form.get("price_prompt", type=int)
 
 	if username == "":
-		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="入札者名が入力されていません。") # TODO i18n
+		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, BidErrorCodes=BidErrorCodes, errcode=BidErrorCodes.BID_ERROR_NO_USERNAME)
 
 	if bidtype == "normal":
 		if price is None or price < 0:
-			return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="金額が入力されていません。") # TODO i18n
+			return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, BidErrorCodes=BidErrorCodes, errcode=BidErrorCodes.BID_ERROR_NO_PRICE)
 	elif bidtype == "min":
 		price = price_bid_min_sent
 	elif bidtype == "prompt":
@@ -75,16 +79,10 @@ def bid(auction_id):
 
 	logic.commit()
 
-	if ret == logic.BidErrorCodes.BID_OK:
-		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=True, price=price)
-	elif ret == logic.BidErrorCodes.BID_ERROR_NOT_FOUND:
+	if ret == logic.BidErrorCodes.BID_ERROR_NOT_FOUND:
 		abort(404)
-	elif ret == logic.BidErrorCodes.BID_ERROR_ALREADY_ENDED:
-		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="オークションはすでに終了しています。") # TODO i18n
-	elif ret == logic.BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST:
-		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="他の人が先に入札しました。") # TODO i18n
 	else:
-		return render_template("bid.html", current_app=current_app, auction_id=auction_id, succeeded=False, reason="不明なアプリケーションエラーが発生しました。" + ret) # TODO i18n
+		return render_template("bid.html", current_app=current_app, auction_id=auction_id, price=price, succeeded=(ret == BidErrorCodes.BID_OK), BidErrorCodes=BidErrorCodes, errcode=ret)
 
 
 @bp.route("/new", methods=["GET"])
@@ -170,6 +168,6 @@ def admin(auction_id):
 		if result == logic.CancelErrorCodes.CANCEL_ERROR_NOT_FOUND:
 			abort(404)
 		else:
-			return render_template("cancel.html", current_app=current_app, auction_id=auction_id, succeeded=(result == logic.CancelErrorCodes.CANCEL_OK), errcode=result)
+			return render_template("cancel.html", current_app=current_app, auction_id=auction_id, succeeded=(result == logic.CancelErrorCodes.CANCEL_OK), CancelErrorCodes=logic.CancelErrorCodes, errcode=result)
 
 	abort(400)

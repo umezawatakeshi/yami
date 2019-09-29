@@ -13,7 +13,17 @@
 <p>{{ "{:,d}".format(price) + "円" }} で入札しました。</p>
 {% else %}
 <p>入札に失敗しました。</p>
-<p>{{ reason }}</p>
+{% if errcode == BidErrorCodes.BID_ERROR_NO_USERNAME %}
+<p>入札者名が入力されていません。</p>
+{% elif errcode == BidErrorCodes.BID_ERROR_NO_PRICE %}
+<p>金額が入力されていません。</p>
+{% elif errcode == BidErrorCodes.BID_ERROR_ALREADY_ENDED %}
+<p>オークションはすでに終了しています。</p>
+{% elif errcode == BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST %}
+<p>他の人が先に入札しました。</p>
+{% else %}
+<p>不明なエラーです。（エラーコード {{ errcode }}）</p>
+{% endif %}
 {% endif %}
 <p>30秒後に自動的にオークション情報ページに遷移します。</p>
 {% endblock %}

@@ -7,11 +7,11 @@
 
 {% block content %}
 {% if auction.ended %}
-{% if auction.endtype == 0 %}
+{% if auction.endtype == EndType.ENDTYPE_NORMAL %}
 <p>このオークションは終了しています。</p>
-{% elif auction.endtype == 1 %}
+{% elif auction.endtype == EndType.ENDTYPE_CANCELED_BY_SELLER %}
 <p>このオークションは出品者によって取り消されています。</p>
-{% elif auction.endtype == 2 %}
+{% elif auction.endtype == EndType.ENDTYPE_CANCELED_BY_ADMIN %}
 <p>このオークションは管理者によって取り消されています。</p>
 {% else %}
 <p>このオークションは不明な理由により終了しています。</p>

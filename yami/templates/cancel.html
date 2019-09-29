@@ -13,7 +13,7 @@
 <p>出品ID {{ auction_id }} の出品を取り消しました。</p>
 {% else %}
 <p>出品の取り消しに失敗しました。</p>
-{% if errcode == 2 %}
+{% if errcode == CancelErrorCodes.CANCEL_ERROR_BAD_PASSWORD %}
 <p>パスワードが間違っています。</p>
 {% else %}
 <p>不明なエラーです。（エラーコード {{ errcode }}）</p>
