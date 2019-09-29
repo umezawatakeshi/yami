@@ -2,7 +2,7 @@ CREATE TABLE t_schemaver (
     plugin          CHAR(12)                     NOT NULL,
     version         INT                          NOT NULL
 )   ENGINE=InnoDB;
-INSERT INTO t_schemaver VALUES ("", 2);
+INSERT INTO t_schemaver VALUES ("", 3);
 
 CREATE TABLE t_auction (
     auction_id      INT                          NOT NULL AUTO_INCREMENT,
@@ -26,7 +26,8 @@ CREATE TABLE t_auction (
 CREATE TABLE t_auction_password (
     auction_id      INT                          NOT NULL,
     password        CHAR(80) CHARACTER SET ascii NOT NULL,
-    PRIMARY KEY (auction_id)
+    PRIMARY KEY (auction_id),
+    FOREIGN KEY (auction_id) REFERENCES t_auction (auction_id)
 )   ENGINE=InnoDB;
 
 CREATE TABLE t_bid (
