@@ -628,7 +628,7 @@ def test_bid_auction_notfound(monkeypatch):
 		mock.call(42, for_update=True),
 	]
 
-	assert result == logic.BID_ERROR_NOT_FOUND
+	assert result == logic.BidErrorCodes.BID_ERROR_NOT_FOUND
 
 
 def test_bid_auction_ended(monkeypatch):
@@ -668,7 +668,7 @@ def test_bid_auction_ended(monkeypatch):
 		mock.call(42, for_update=True),
 	]
 
-	assert result == logic.BID_ERROR_ALREADY_ENDED
+	assert result == logic.BidErrorCodes.BID_ERROR_ALREADY_ENDED
 
 
 def test_bid_auction_another_one_bidded_first(monkeypatch):
@@ -713,7 +713,7 @@ def test_bid_auction_another_one_bidded_first(monkeypatch):
 		mock.call(42, for_update=True),
 	]
 
-	assert result == logic.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
+	assert result == logic.BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
 
 
 @pytest.mark.parametrize("quantity, enddelta, price_prompt, price_bidded, hammer_end, extend", [
@@ -829,7 +829,7 @@ def test_bid_auction_ok(quantity, enddelta, price_prompt, price_bidded, hammer_e
 		mock.call.close(),
 	]
 
-	assert result == logic.BID_OK
+	assert result == logic.BidErrorCodes.BID_OK
 	assert newbid["bid_id"] == 4
 	assert newbid["price"] == price_bidded
 	assert newbid["datetime_bid"] == datetime_now
@@ -1000,7 +1000,7 @@ def test_cancel_auction_notfound():
 		g.db = db_mock
 		result = logic.cancel_auction(42, "password")
 
-	assert result == logic.CANCEL_ERROR_NOT_FOUND
+	assert result == logic.CancelErrorCodes.CANCEL_ERROR_NOT_FOUND
 
 	assert db_mock.cursor.mock_calls == [
 		mock.call(),
@@ -1031,7 +1031,7 @@ def test_cancel_auction_badpassword():
 		g.db = db_mock
 		result = logic.cancel_auction(42, "password")
 
-	assert result == logic.CANCEL_ERROR_BAD_PASSWORD
+	assert result == logic.CancelErrorCodes.CANCEL_ERROR_BAD_PASSWORD
 
 	assert db_mock.cursor.mock_calls == [
 		mock.call(),
@@ -1067,7 +1067,7 @@ def test_cancel_auction_ok(isadmin):
 		g.db = db_mock
 		result = logic.cancel_auction(42, "password")
 
-	assert result == logic.CANCEL_OK
+	assert result == logic.CancelErrorCodes.CANCEL_OK
 
 	assert db_mock.cursor.mock_calls == [
 		mock.call(),
@@ -1082,6 +1082,6 @@ def test_cancel_auction_ok(isadmin):
 
 	assert cursor_mock2.mock_calls == [
 		mock.call.execute("UPDATE t_auction SET ended = 1, endtype = %s, datetime_update = %s WHERE auction_id = %s",
-			(2 if isadmin else 1, datetime_now, 42)),
+			(logic.EndType.ENDTYPE_CANCELED_BY_ADMIN if isadmin else logic.EndType.ENDTYPE_CANCELED_BY_SELLER, datetime_now, 42)),
 		mock.call.close(),
 	]

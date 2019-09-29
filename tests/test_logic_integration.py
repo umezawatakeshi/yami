@@ -129,7 +129,7 @@ def test_bid_auction_error(initdb):
 		})
 		logic.commit()
 
-	assert bid_result == logic.BID_ERROR_NOT_FOUND
+	assert bid_result == logic.BidErrorCodes.BID_ERROR_NOT_FOUND
 
 	with app.app_context():
 		g.datetime_now = datetime_now
@@ -155,7 +155,7 @@ def test_bid_auction_error(initdb):
 		})
 		logic.commit()
 
-	assert bid_result == logic.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
+	assert bid_result == logic.BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
 
 	with app.app_context():
 		g.datetime_now = datetime_end
@@ -166,7 +166,7 @@ def test_bid_auction_error(initdb):
 		})
 		logic.commit()
 
-	assert bid_result == logic.BID_ERROR_ALREADY_ENDED
+	assert bid_result == logic.BidErrorCodes.BID_ERROR_ALREADY_ENDED
 
 
 def test_bid_auction_prompt(initdb):
@@ -208,7 +208,7 @@ def test_bid_auction_prompt(initdb):
 		auction, bids = logic.get_auction_info(auction_id, for_update=False)
 		logic.commit()
 
-	assert bid_result == logic.BID_OK
+	assert bid_result == logic.BidErrorCodes.BID_OK
 
 	assert auction["ended"]
 	assert auction["datetime_update"] == datetime_bid
@@ -229,7 +229,7 @@ def test_bid_auction_prompt(initdb):
 		})
 		logic.commit()
 
-	assert bid_result == logic.BID_ERROR_ALREADY_ENDED
+	assert bid_result == logic.BidErrorCodes.BID_ERROR_ALREADY_ENDED
 
 
 def test_bid_auction_manytimes(initdb):
@@ -275,7 +275,7 @@ def test_bid_auction_manytimes(initdb):
 		logic.commit()
 
 	for i in range(3):
-		assert bid_results[i] == logic.BID_OK
+		assert bid_results[i] == logic.BidErrorCodes.BID_OK
 
 	assert not auction["ended"]
 	assert auction["datetime_update"] == datetime_bid + timedelta(days=3)
@@ -356,7 +356,7 @@ def test_cancel_auction_notfound(initdb):
 		result = logic.cancel_auction(42, "")
 		logic.commit()
 
-	assert result == logic.CANCEL_ERROR_NOT_FOUND
+	assert result == logic.CancelErrorCodes.CANCEL_ERROR_NOT_FOUND
 
 
 def test_cancel_auction_badpassword(initdb):
@@ -384,7 +384,7 @@ def test_cancel_auction_badpassword(initdb):
 		g.datetime_now = datetime_now + timedelta(minutes=30)
 		result = logic.cancel_auction(auction_id, "")
 
-	assert result == logic.CANCEL_ERROR_BAD_PASSWORD
+	assert result == logic.CancelErrorCodes.CANCEL_ERROR_BAD_PASSWORD
 
 
 def test_cancel_auction_seller(initdb):
@@ -414,9 +414,9 @@ def test_cancel_auction_seller(initdb):
 		auction, _ = logic.get_auction_info(auction_id, for_update=False)
 		logic.commit()
 
-	assert result == logic.CANCEL_OK
+	assert result == logic.CancelErrorCodes.CANCEL_OK
 	assert auction["ended"] == 1
-	assert auction["endtype"] == logic.ENDTYPE_CANCELED_BY_SELLER
+	assert auction["endtype"] == logic.EndType.ENDTYPE_CANCELED_BY_SELLER
 	assert auction["datetime_update"] == datetime_now + timedelta(minutes=30)
 
 
@@ -448,7 +448,7 @@ def test_cancel_auction_admin(initdb):
 		auction, _ = logic.get_auction_info(auction_id, for_update=False)
 		logic.commit()
 
-	assert result == logic.CANCEL_OK
+	assert result == logic.CancelErrorCodes.CANCEL_OK
 	assert auction["ended"] == 1
-	assert auction["endtype"] == logic.ENDTYPE_CANCELED_BY_ADMIN
+	assert auction["endtype"] == logic.EndType.ENDTYPE_CANCELED_BY_ADMIN
 	assert auction["datetime_update"] == datetime_now + timedelta(minutes=30)
