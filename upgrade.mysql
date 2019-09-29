@@ -14,6 +14,11 @@ BEGIN
             AFTER ended;
         UPDATE t_schemaver SET version = 2 WHERE plugin = "";
     END IF;
+
+    IF (SELECT version FROM t_schemaver WHERE plugin = "") = 2 THEN
+        ALTER TABLE t_auction_password ADD FOREIGN KEY (auction_id) REFERENCES t_auction (auction_id);
+        UPDATE t_schemaver SET version = 3 WHERE plugin = "";
+    END IF;
 END//
 delimiter ;
 
