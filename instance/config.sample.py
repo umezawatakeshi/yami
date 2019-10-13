@@ -59,6 +59,24 @@ YAMI_AUTO_EXTENSION = 300
 YAMI_ADMIN_PASSWORD = "pbkdf2_sha256$3600$salt$xxxx"
 
 
+## Flask configuration ##
+
+# Preferred URL scheme for this site. "http" (default) or "https"
+# このサイトの「好ましい」URL スキーム。 "http" （デフォルト）または "https"
+PREFERRED_URL_SCHEME = "http"
+
+# Server host name of this site. This may include port number.
+# note: If this site uses the default port number of the scheme set above, SERVER_NAME *MUST NOT* include port number.
+# このサイトのホスト名。必要ならポート番号を含んでもよい。
+# 注意: 上で設定したスキームのデフォルトのポート番号を使っている場合、ポート番号を含んではならない。
+SERVER_NAME = "yami.example.com"
+SERVER_NAME = "yami.example.com:8000"
+
+# Application root of this site. The default is "/"
+# このサイトのアプリケーションのルート。
+APPLICATION_ROOT = "/"
+
+
 ## database configuration ##
 
 MYSQL_CONNECT_KWARGS = {
