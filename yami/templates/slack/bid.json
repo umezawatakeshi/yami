@@ -1,0 +1,16 @@
+{
+    "text": {{ (
+        "*【入札】* <{}|{}>\n"+
+        "入札者: {}\n"+
+        "入札価格: {}"+
+        ("\n終了時刻: <!date^{}^{}|{} UTC> （延長）" if extended else "")
+    ).format(
+        url_for('view.info', auction_id=auction.auction_id, _external=True),
+        slack_escape(auction.itemname),
+        slack_escape(bid.username),
+        "{:,d}".format(bid.price) + "円",
+        auction.datetime_end.timestamp()|int,
+        "{date_num} {time_secs}",
+        auction.datetime_end.strftime("%Y-%m-%d %H:%M:%S")
+    )|tojson }}
+}

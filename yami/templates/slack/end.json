@@ -1,0 +1,8 @@
+{
+    "text": {{ (
+        "*【終了】* <{}|{}>"
+    ).format(
+        url_for('view.info', auction_id=auction.auction_id, _external=True),
+        slack_escape(auction.itemname)
+    )|tojson }}
+}

@@ -1,0 +1,22 @@
+{
+    "text": {{ (
+        "*【出品】* <{}|{}>\n"+
+        "数量: {}\n"+
+        "出品者: {}\n"+
+        "開始価格: {}\n"+
+        "即決価格: {}\n"+
+        "終了時刻: <!date^{}^{}|{} UTC>\n"+
+        "説明文:\n{}"
+    ).format(
+        url_for('view.info', auction_id=auction_id, _external=True),
+        slack_escape(auction.itemname),
+        auction.quantity,
+        slack_escape(auction.username),
+        "{:,d}".format(auction.price_start) + "円",
+        "{:,d}".format(auction.price_prompt) + "円" if auction.price_prompt != None else "-",
+        auction.datetime_end.timestamp()|int,
+        "{date_num} {time_secs}",
+        auction.datetime_end.strftime("%Y-%m-%d %H:%M:%S"),
+        slack_escape(auction.description)
+    )|tojson }}
+}

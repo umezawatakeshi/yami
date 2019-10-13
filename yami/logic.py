@@ -1,4 +1,4 @@
-from flask import current_app, g, request
+from flask import current_app, g, request, render_template
 from . import db
 import tzlocal
 from datetime import datetime, timedelta, timezone
@@ -7,6 +7,7 @@ from decimal import Decimal
 import hashlib
 import base64
 import secrets
+from .plugins import slack
 
 
 def get_auction_list(limit, offset, ended):
@@ -123,10 +124,16 @@ def bid_auction(newbid):
 				rest -= 1
 		hammer(auction, [newbid], rest <= 1, False)
 	else:
-		extended = g.datetime_now + timedelta(seconds=current_app.config["YAMI_AUTO_EXTENSION"])
-		if auction["datetime_end"] < extended:
+		new_end = g.datetime_now + timedelta(seconds=current_app.config["YAMI_AUTO_EXTENSION"])
+		extended = (auction["datetime_end"] < new_end)
+		if extended:
+			auction["datetime_end"] = new_end
 			with db.get_cursor() as cur:
-				cur.execute("UPDATE t_auction SET datetime_end = %s WHERE auction_id = %s", (extended, auction["auction_id"]))
+				cur.execute("UPDATE t_auction SET datetime_end = %s WHERE auction_id = %s", (auction["datetime_end"], auction["auction_id"]))
+
+		# XXX Slack Plugin
+		slack.after_bid_auction(auction, newbid, extended)
+		# END Slack Plugin
 
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
@@ -184,6 +191,10 @@ def new_auction(auction):
 		cur.execute("INSERT INTO t_auction_password (auction_id, password) VALUES (%s, %s)",
 			(auction_id, encoded_password))
 
+	# XXX Slack Plugin
+	slack.after_new_auction(auction, auction_id, password)
+	# END Slack Plugin
+
 	return (auction_id, password)
 
 
@@ -212,6 +223,12 @@ def cancel_auction(auction_id, password):
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET ended = 1, endtype = %s, datetime_update = %s WHERE auction_id = %s",
 			(EndType.ENDTYPE_CANCELED_BY_ADMIN if isadmin else EndType.ENDTYPE_CANCELED_BY_SELLER, g.datetime_now, auction_id))
+
+	auction, _ = get_auction_info(auction_id, for_update=False)
+
+	# XXX Slack Plugin
+	slack.after_cancel(auction, isadmin)
+	# END Slack Plugin
 
 	return CancelErrorCodes.CANCEL_OK
 
@@ -256,10 +273,17 @@ def append_localtime(dic):
 
 def hammer(auction, bids, ended, expired):
 	for bid in bids:
+		# XXX Slack Plugin
+		slack.after_hammer(auction, bid, ended, expired)
+		# END Slack Plugin
 		pass
 
 	if not ended:
 		return
+
+	# XXX Slack Plugin
+	slack.after_end(auction, expired)
+	# END Slack Plugin
 
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET ended = 1 WHERE auction_id = %s", (auction["auction_id"],))
