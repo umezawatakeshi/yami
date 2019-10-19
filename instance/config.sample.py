@@ -59,6 +59,17 @@ YAMI_AUTO_EXTENSION = 300
 YAMI_ADMIN_PASSWORD = "pbkdf2_sha256$3600$salt$xxxx"
 
 
+## slack plugin ##
+
+# URL of incoming webhook.
+# Incoming Webhook の URL。
+SLACK_INCOMING_WEBHOOK_URL = "http://..."
+
+# Admin slack username.
+# 管理者の Slack ユーザー名。
+SLACK_ADMIN_USERNAME = "@yami-master"
+
+
 ## Flask configuration ##
 
 # Preferred URL scheme for this site. "http" (default) or "https"

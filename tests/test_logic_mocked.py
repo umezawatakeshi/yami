@@ -1048,13 +1048,17 @@ def test_cancel_auction_badpassword():
 	(False),
 	(True ),
 ])
-def test_cancel_auction_ok(isadmin):
+def test_cancel_auction_ok(isadmin, monkeypatch):
 	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 	#datetime_now_naive = datetime_now.replace(tzinfo=None)
 
 	app = create_app({
 		"YAMI_ADMIN_PASSWORD": "pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=" if isadmin else ""
 	})
+
+	get_auction_info_mock = mock.MagicMock()
+	get_auction_info_mock.return_value = ({}, [])
+	monkeypatch.setattr(logic, "get_auction_info", lambda auction_id, for_update: get_auction_info_mock(auction_id, for_update))
 
 	cursor_mock1 = create_cursor_mock()
 	cursor_mock1.fetchone.return_value = ["pbkdf2_sha256$100000$salt$A5Si7eMyyaE+uC6bJGMWBMMd+Xi04vD70sVJlE+deaU=" if not isadmin else ""]
