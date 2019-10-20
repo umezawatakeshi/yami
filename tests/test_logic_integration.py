@@ -251,7 +251,7 @@ def test_bid_auction_manytimes(initdb):
 		g.datetime_now = datetime_now
 		auction_id, _ = logic.new_auction({
 			"itemname": "foo",
-			"quantity": 1,
+			"quantity": 2,
 			"username": "bar",
 			"datetime_end": datetime_end,
 			"price_start": 456,
@@ -264,7 +264,7 @@ def test_bid_auction_manytimes(initdb):
 
 	bid_results = []
 	with app.app_context():
-		for i in range(3):
+		for i in range(5):
 			g.datetime_now = datetime_bid + timedelta(days=i+1)
 			bid_results.append(logic.bid_auction({
 				"auction_id": auction_id,
@@ -272,32 +272,24 @@ def test_bid_auction_manytimes(initdb):
 				"price": 1000 * (i+1),
 			}))
 		auction, bids = logic.get_auction_info(auction_id, for_update=False)
+		auctions, _ = logic.get_auction_list(1, 0, False)
 		logic.commit()
 
-	for i in range(3):
+	for i in range(5):
 		assert bid_results[i] == logic.BidErrorCodes.BID_OK
 
 	assert not auction["ended"]
-	assert auction["datetime_update"] == datetime_bid + timedelta(days=3)
-	assert bids == [{
-		"bid_id": 3,
-		"auction_id": auction_id,
-		"username": "hoge2",
-		"price": 3000,
-		"datetime_bid": datetime_bid + timedelta(days=3),
-	},{
-		"bid_id": 2,
-		"auction_id": auction_id,
-		"username": "hoge1",
-		"price": 2000,
-		"datetime_bid": datetime_bid + timedelta(days=2),
-	},{
-		"bid_id": 1,
-		"auction_id": auction_id,
-		"username": "hoge0",
-		"price": 1000,
-		"datetime_bid": datetime_bid + timedelta(days=1),
-	}]
+	assert auction["datetime_update"] == datetime_bid + timedelta(days=5)
+	assert auction["price_current_low"] == 4000
+	assert auctions[0]["price_current_low"] == 4000
+	for i in range(5):
+		assert bids[i] == {
+			"bid_id": 5-i,
+			"auction_id": auction_id,
+			"username": "hoge" + str(4-i),
+			"price": 1000 * (5-i),
+			"datetime_bid": datetime_bid + timedelta(days=5-i),
+		}
 
 
 def test_bid_auction_extension(initdb):

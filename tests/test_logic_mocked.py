@@ -195,13 +195,13 @@ def test_get_auction_list_held():
 	]
 
 	assert cursor_mock3.mock_calls == [
-		mock.call.execute("SELECT price FROM t_bid WHERE auction_id = %s ORDER BY price LIMIT 1 OFFSET %s", (2, 2)),
+		mock.call.execute("SELECT price FROM t_bid WHERE auction_id = %s ORDER BY price DESC LIMIT 1 OFFSET %s", (2, 2)),
 		mock.call.fetchone(),
 		mock.call.close(),
 	]
 
 	assert cursor_mock4.mock_calls == [
-		mock.call.execute("SELECT price FROM t_bid WHERE auction_id = %s ORDER BY price LIMIT 1 OFFSET %s", (7, 4)),
+		mock.call.execute("SELECT price FROM t_bid WHERE auction_id = %s ORDER BY price DESC LIMIT 1 OFFSET %s", (7, 4)),
 		mock.call.fetchone(),
 		mock.call.close(),
 	]
