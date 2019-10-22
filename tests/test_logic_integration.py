@@ -292,6 +292,83 @@ def test_bid_auction_manytimes(initdb):
 		}
 
 
+def test_bid_auction_dupprice(initdb):
+	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
+	datetime_bid = datetime(2000, 6, 7, 8, 9, 10, tzinfo=timezone.utc)
+
+	app = create_app({
+		"MYSQL_CONNECT_KWARGS": testdb.MYSQL_CONNECT_KWARGS,
+		"YAMI_PRICE_STEP_MIN": 111,
+		"YAMI_PRICE_STEP_FROM_CURRENT_PRICE": True,
+		"YAMI_PRICE_STEP_RULE": {
+			1: 1,
+		},
+		"YAMI_AUTO_EXTENSION": 0,
+	})
+
+	with app.app_context():
+		g.datetime_now = datetime_now
+		auction_id, _ = logic.new_auction({
+			"itemname": "foo",
+			"quantity": 2,
+			"username": "bar",
+			"datetime_end": datetime_end,
+			"price_start": 456,
+			"price_prompt": None,
+			"price_step_min": 111,
+			"location": "anyware",
+			"description": "something",
+		})
+		logic.commit()
+
+	bid_results = []
+	with app.app_context():
+		g.datetime_now = datetime_bid + timedelta(days=1)
+		bid_results.append(logic.bid_auction({
+			"auction_id": auction_id,
+			"username": "hoge0",
+			"price": 1000,
+		}))
+		g.datetime_now = datetime_bid + timedelta(days=2)
+		bid_results.append(logic.bid_auction({
+			"auction_id": auction_id,
+			"username": "hoge1",
+			"price": 1000,
+		}))
+		bid_results.append(logic.bid_auction({
+			"auction_id": auction_id,
+			"username": "hoge2",
+			"price": 2000,
+		}))
+		auction, bids = logic.get_auction_info(auction_id, for_update=False)
+		logic.commit()
+
+	for i in range(3):
+		assert bid_results[i] == logic.BidErrorCodes.BID_OK
+
+	assert auction["price_current_low"] == 1000
+	assert bids == [{
+		"bid_id": 3,
+		"auction_id": auction_id,
+		"username": "hoge2",
+		"price": 2000,
+		"datetime_bid": datetime_bid + timedelta(days=2),
+	},{
+		"bid_id": 1,
+		"auction_id": auction_id,
+		"username": "hoge0",
+		"price": 1000,
+		"datetime_bid": datetime_bid + timedelta(days=1),
+	},{
+		"bid_id": 2,
+		"auction_id": auction_id,
+		"username": "hoge1",
+		"price": 1000,
+		"datetime_bid": datetime_bid + timedelta(days=2),
+	}]
+
+
 def test_bid_auction_extension(initdb):
 	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
