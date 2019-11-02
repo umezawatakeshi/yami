@@ -116,13 +116,24 @@ def bid_auction(newbid):
 		cur.execute("SELECT LAST_INSERT_ID() FROM t_bid")
 		newbid["bid_id"] = cur.fetchone()[0]
 
+	ended = False
+	prompt = False
 	if auction["price_prompt"] is not None and newbid["price"] >= auction["price_prompt"]:
+		prompt = True
 		newbid["datetime_bid"] = g.datetime_now
 		rest = auction["quantity"]
 		for bid in bids:
 			if bid["price"] >= auction["price_prompt"]:
 				rest -= 1
-		hammer(auction, [newbid], rest <= 1, False)
+		ended = (rest <= 1)
+		auction["ended"] = ended
+
+	# XXX Slack Plugin
+	slack.after_bid_auction(auction, newbid, prompt)
+	# END Slack Plugin
+
+	if ended:
+		end_auction(auction)
 	else:
 		new_end = g.datetime_now + timedelta(seconds=current_app.config["YAMI_AUTO_EXTENSION"])
 		extended = (auction["datetime_end"] < new_end)
@@ -130,10 +141,9 @@ def bid_auction(newbid):
 			auction["datetime_end"] = new_end
 			with db.get_cursor() as cur:
 				cur.execute("UPDATE t_auction SET datetime_end = %s WHERE auction_id = %s", (auction["datetime_end"], auction["auction_id"]))
-
-		# XXX Slack Plugin
-		slack.after_bid_auction(auction, newbid, extended)
-		# END Slack Plugin
+			# XXX Slack Plugin
+			slack.after_extend(auction)
+			# END Slack Plugin
 
 	with db.get_cursor() as cur:
 		cur.execute("UPDATE t_auction SET datetime_update = %s WHERE auction_id = %s", (g.datetime_now, auction["auction_id"]))
@@ -249,7 +259,12 @@ def check_expiration():
 		if auction["price_prompt"] is not None:
 			bids = filter(lambda bid: bid["price"] < auction["price_prompt"], bids)
 
-		hammer(auction, bids, True, True)
+		auction["ended"] = True
+		for bid in bids:
+			# XXX Slack Plugin
+			slack.after_hammer(auction, bid)
+			# END Slack Plugin
+		end_auction(auction)
 
 		with db.get_cursor() as cur:
 			cur.execute("UPDATE t_auction SET datetime_update = datetime_end WHERE auction_id = %s", (auction["auction_id"],))
@@ -271,18 +286,9 @@ def append_localtime(dic):
 	dic.update(appended)
 	return dic
 
-def hammer(auction, bids, ended, expired):
-	for bid in bids:
-		# XXX Slack Plugin
-		slack.after_hammer(auction, bid, ended, expired)
-		# END Slack Plugin
-		pass
-
-	if not ended:
-		return
-
+def end_auction(auction):
 	# XXX Slack Plugin
-	slack.after_end(auction, expired)
+	slack.after_end(auction)
 	# END Slack Plugin
 
 	with db.get_cursor() as cur:
