@@ -1,10 +1,9 @@
 {
     "text": {{ (
-        "*【落札{}】* <{}|{}>\n"+
+        "*【落札】* <{}|{}>\n"+
         "落札者: {}\n"+
         "落札価格: {}"
     ).format(
-        "" if expired else ":即決",
         url_for('view.info', auction_id=auction.auction_id, _external=True),
         slack_escape(auction.itemname),
         slack_escape(bid.username),

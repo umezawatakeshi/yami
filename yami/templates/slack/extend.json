@@ -1,0 +1,12 @@
+{
+    "text": {{ (
+        "*【延長】* <{}|{}>\n"+
+        "終了時刻: <!date^{}^{}|{} UTC>"
+    ).format(
+        url_for('view.info', auction_id=auction.auction_id, _external=True),
+        slack_escape(auction.itemname),
+        auction.datetime_end.timestamp()|int,
+        "{date_num} {time_secs}",
+        auction.datetime_end.strftime("%Y-%m-%d %H:%M:%S")
+    )|tojson }}
+}

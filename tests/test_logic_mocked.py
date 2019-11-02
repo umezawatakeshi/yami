@@ -716,18 +716,17 @@ def test_bid_auction_another_one_bidded_first(monkeypatch):
 	assert result == logic.BidErrorCodes.BID_ERROR_ANOTHER_ONE_BIDDED_FIRST
 
 
-@pytest.mark.parametrize("quantity, enddelta, price_prompt, price_bidded, hammer_end, extend", [
-	(3, 86400, None, 250, None , False),
-	(3, 86400,  300, 250, None , False),
-	(3, 86400,  250, 250, False, False),
-	(3, 86400,  220, 220, False, False),
-	(3,   300, None, 250, None , False),
-	(3,   300,  220, 220, False, False),
-	(3,   100, None, 250, None , True ),
-	(3,   100,  220, 220, False, False),
-	(2, 86400,  100, 100, True , False),
+@pytest.mark.parametrize("quantity, enddelta, price_prompt, price_bidded, ended, extend", [
+	(3, 86400, None, 250, False, False), # enddelta > YAMI_AUTO_EXTENSION
+	(3, 86400,  300, 250, False, False), # price_prompt > newbid["price"]
+	(3, 86400,  250, 250, False, False), # price_prompt == newbid["price"]
+	(3, 86400,  220, 220, False, False), # price_prompt < newbid["price"]
+	(3,   300, None, 250, False, False), # enddelta == YAMI_AUTO_EXTENSION
+	(3,   100, None, 250, False, True ), # enddelta < YAMI_AUTO_EXTENSION
+	(3,   100,  100, 100, False, True ),
+	(2,   100,  100, 100, True , False),
 ])
-def test_bid_auction_ok(quantity, enddelta, price_prompt, price_bidded, hammer_end, extend, monkeypatch):
+def test_bid_auction_ok(quantity, enddelta, price_prompt, price_bidded, ended, extend, monkeypatch):
 	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 	#datetime_now_naive = datetime_now.replace(tzinfo=None)
 
@@ -762,8 +761,8 @@ def test_bid_auction_ok(quantity, enddelta, price_prompt, price_bidded, hammer_e
 	}])
 	monkeypatch.setattr(logic, "get_auction_info", get_auction_info_mock)
 
-	hammer_mock = mock.MagicMock()
-	monkeypatch.setattr(logic, "hammer", hammer_mock)
+	end_auction_mock = mock.MagicMock()
+	monkeypatch.setattr(logic, "end_auction", end_auction_mock)
 
 	cursor_mock1 = create_cursor_mock()
 	cursor_mock1.fetchone.return_value = (4,)
@@ -784,23 +783,18 @@ def test_bid_auction_ok(quantity, enddelta, price_prompt, price_bidded, hammer_e
 		mock.call(42, for_update=True),
 	]
 
-	assert hammer_mock.mock_calls == ([] if hammer_end is None else [
+	assert end_auction_mock.mock_calls == ([
 		mock.call({
 			"auction_id": 42,
 			"quantity": quantity,
 			"price_start": 10,
 			"price_prompt": price_prompt,
 			"price_step_min": 100,
-			"ended": False,
+			"ended": True,
 			"datetime_end": datetime_now + timedelta(seconds=enddelta),
 			"price_bid_min": 200,
-		}, [{
-			"auction_id": 42,
-			"price": price_bidded,
-			"username": "bidder",
-			"bid_id": 4,
-			"datetime_bid": datetime_now,
-		}], hammer_end, False)
+		})
+	] if ended else [
 	])
 
 	assert db_mock.cursor.mock_calls == ([
@@ -835,42 +829,6 @@ def test_bid_auction_ok(quantity, enddelta, price_prompt, price_bidded, hammer_e
 	assert newbid["datetime_bid"] == datetime_now
 
 
-@pytest.mark.parametrize("ended, expired", [
-	(False, False),
-	(True , False),
-	(True , True ),
-])
-def test_hammer(ended, expired):
-	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
-	#datetime_now_naive = datetime_now.replace(tzinfo=None)
-
-	app = create_app({
-	})
-	auction = {
-		"auction_id": 42,
-	}
-	bids = []
-
-	cursor_mock1 = create_cursor_mock()
-	cursor_mock1.fetchone.return_value = (4,)
-	db_mock = mock.MagicMock()
-	db_mock.cursor.side_effect = [cursor_mock1]
-
-	with app.app_context():
-		g.datetime_now = datetime_now
-		g.db = db_mock
-		logic.hammer(auction, bids, ended, expired)
-
-	assert db_mock.cursor.mock_calls == ([
-		mock.call(),
-	] if ended else [])
-
-	assert cursor_mock1.mock_calls == ([
-		mock.call.execute("UPDATE t_auction SET ended = 1 WHERE auction_id = %s", (42,)),
-		mock.call.close(),
-	] if ended else [])
-
-
 def test_check_expiration(monkeypatch):
 	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 	#datetime_now_naive = datetime_now.replace(tzinfo=None)
@@ -889,8 +847,8 @@ def test_check_expiration(monkeypatch):
 		"ended": 0,
 	}]
 
-	hammer_mock = mock.MagicMock()
-	monkeypatch.setattr(logic, "hammer", lambda auction, bids, ended, expired: hammer_mock(auction, list(bids), ended, expired))
+	end_auction_mock = mock.MagicMock()
+	monkeypatch.setattr(logic, "end_auction", end_auction_mock)
 
 	cursor_mock1 = create_cursor_mock()
 	cursor_mock1.fetchall.return_value = auctions
@@ -956,29 +914,19 @@ def test_check_expiration(monkeypatch):
 		mock.call.close(),
 	]
 
-	print(hammer_mock.mock_calls)
-	assert hammer_mock.mock_calls == [
+	assert end_auction_mock.mock_calls == [
 		mock.call({
 			"auction_id": 1,
 			"quantity": 2,
 			"price_prompt": None,
-			"ended": False,
-		},[{
-			"bid_id": 1,
-			"price": 100
-		}, {
-			"bid_id": 2,
-			"price": 80
-		}], True, True),
+			"ended": True,
+		}),
 		mock.call({
 			"auction_id": 2,
 			"quantity": 2,
 			"price_prompt": 100,
-			"ended": False,
-		},[{
-			"bid_id": 2,
-			"price": 80
-		}], True, True),
+			"ended": True,
+		}),
 	]
 
 

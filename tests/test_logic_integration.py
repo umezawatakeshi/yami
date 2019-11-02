@@ -369,7 +369,13 @@ def test_bid_auction_dupprice(initdb):
 	}]
 
 
-def test_bid_auction_extension(initdb):
+@pytest.mark.parametrize("quantity, prompt, extended", [
+	(1, False, True ),
+	(1, True,  False),
+	(2, False, True ),
+	(2, True,  True ),
+])
+def test_bid_auction_extension(quantity, prompt, extended, initdb):
 	datetime_now = datetime(2000, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 	datetime_end = datetime(2000, 12, 11, 10, 9, 8, tzinfo=timezone.utc)
 	yami_auto_extension = 3600
@@ -388,11 +394,11 @@ def test_bid_auction_extension(initdb):
 		g.datetime_now = datetime_now
 		auction_id, _ = logic.new_auction({
 			"itemname": "foo",
-			"quantity": 1,
+			"quantity": quantity,
 			"username": "bar",
 			"datetime_end": datetime_end,
 			"price_start": 456,
-			"price_prompt": None,
+			"price_prompt": 1000,
 			"price_step_min": 111,
 			"location": "anyware",
 			"description": "something",
@@ -404,12 +410,12 @@ def test_bid_auction_extension(initdb):
 		logic.bid_auction({
 			"auction_id": auction_id,
 			"username": "hoge",
-			"price": 1000,
+			"price": 1000 if prompt else 500,
 		})
 		auction, _ = logic.get_auction_info(auction_id, for_update=False)
 		logic.commit()
 
-	assert auction["datetime_end"] == datetime_end - timedelta(minutes=30) + timedelta(seconds=yami_auto_extension)
+	assert auction["datetime_end"] == datetime_end + (-timedelta(minutes=30) + timedelta(seconds=yami_auto_extension) if extended else timedelta())
 
 
 def test_cancel_auction_notfound(initdb):
